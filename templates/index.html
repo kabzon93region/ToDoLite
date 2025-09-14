@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Мой Задачник</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .add-task {
+            padding: 30px;
+            background: #f8f9fa;
+            border-bottom: 1px solid #dee2e6;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #495057;
+        }
+
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #dee2e6;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 12px 30px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            transition: transform 0.2s;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+        }
+
+        .tasks-container {
+            padding: 30px;
+        }
+
+        .task {
+            background: white;
+            border: 2px solid #dee2e6;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 15px;
+            transition: all 0.3s;
+            position: relative;
+        }
+
+        .task:hover {
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            transform: translateY(-2px);
+        }
+
+        .task.todo {
+            border-left: 5px solid #ffc107;
+        }
+
+        .task.doing {
+            border-left: 5px solid #17a2b8;
+        }
+
+        .task.done {
+            border-left: 5px solid #28a745;
+            opacity: 0.7;
+        }
+
+        .task-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 10px;
+        }
+
+        .task-title {
+            font-size: 1.2em;
+            font-weight: bold;
+            color: #495057;
+            margin-bottom: 5px;
+        }
+
+        .task-priority {
+            padding: 4px 8px;
+            border-radius: 20px;
+            font-size: 0.8em;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+
+        .priority-high {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .priority-medium {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .priority-low {
+            background: #d1ecf1;
+            color: #0c5460;
+        }
+
+        .task-description {
+            color: #6c757d;
+            margin-bottom: 15px;
+            line-height: 1.5;
+        }
+
+        .task-actions {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .btn-small {
+            padding: 6px 12px;
+            font-size: 14px;
+            border-radius: 5px;
+        }
+
+        .btn-success {
+            background: #28a745;
+        }
+
+        .btn-warning {
+            background: #ffc107;
+            color: #212529;
+        }
+
+        .btn-info {
+            background: #17a2b8;
+        }
+
+        .btn-danger {
+            background: #dc3545;
+        }
+
+        .status-badge {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            padding: 4px 8px;
+            border-radius: 15px;
+            font-size: 0.8em;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+
+        .status-todo {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .status-doing {
+            background: #d1ecf1;
+            color: #0c5460;
+        }
+
+        .status-done {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                margin: 10px;
+                border-radius: 10px;
+            }
+            
+            .header h1 {
+                font-size: 2em;
+            }
+            
+            .task-header {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            
+            .task-actions {
+                margin-top: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📝 Мой Задачник</h1>
+            <p>Простой и удобный способ управления задачами</p>
+        </div>
+
+        <div class="add-task">
+            <h2>Добавить новую задачу</h2>
+            <form method="POST" action="/add_task">
+                <div class="form-group">
+                    <label for="title">Название задачи:</label>
+                    <input type="text" id="title" name="title" required>
+                </div>
+                <div class="form-group">
+                    <label for="description">Описание:</label>
+                    <textarea id="description" name="description" rows="3"></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="priority">Приоритет:</label>
+                    <select id="priority" name="priority">
+                        <option value="low">Низкий</option>
+                        <option value="medium" selected>Средний</option>
+                        <option value="high">Высокий</option>
+                    </select>
+                </div>
+                <button type="submit" class="btn">Добавить задачу</button>
+            </form>
+        </div>
+
+        <div class="tasks-container">
+            <h2>Мои задачи</h2>
+            {% if tasks %}
+                {% for task in tasks %}
+                <div class="task {{ task[3] }}">
+                    <div class="status-badge status-{{ task[3] }}">
+                        {% if task[3] == 'todo' %}К выполнению
+                        {% elif task[3] == 'doing' %}В работе
+                        {% elif task[3] == 'done' %}Выполнено
+                        {% endif %}
+                    </div>
+                    
+                    <div class="task-header">
+                        <div>
+                            <div class="task-title">{{ task[1] }}</div>
+                            <div class="task-priority priority-{{ task[4] }}">
+                                {% if task[4] == 'high' %}Высокий
+                                {% elif task[4] == 'medium' %}Средний
+                                {% elif task[4] == 'low' %}Низкий
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    {% if task[2] %}
+                    <div class="task-description">{{ task[2] }}</div>
+                    {% endif %}
+                    
+                    <div class="task-actions">
+                        {% if task[3] == 'todo' %}
+                            <a href="/update_status/{{ task[0] }}/doing" class="btn btn-small btn-info">Начать</a>
+                        {% elif task[3] == 'doing' %}
+                            <a href="/update_status/{{ task[0] }}/done" class="btn btn-small btn-success">Завершить</a>
+                            <a href="/update_status/{{ task[0] }}/todo" class="btn btn-small btn-warning">Вернуть</a>
+                        {% elif task[3] == 'done' %}
+                            <a href="/update_status/{{ task[0] }}/doing" class="btn btn-small btn-info">Возобновить</a>
+                        {% endif %}
+                        <a href="/delete_task/{{ task[0] }}" class="btn btn-small btn-danger" 
+                           onclick="return confirm('Вы уверены, что хотите удалить эту задачу?')">Удалить</a>
+                    </div>
+                </div>
+                {% endfor %}
+            {% else %}
+                <div style="text-align: center; padding: 40px; color: #6c757d;">
+                    <h3>Пока нет задач</h3>
+                    <p>Добавьте первую задачу выше!</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</body>
+</html>
