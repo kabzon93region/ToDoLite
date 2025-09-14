@@ -20,8 +20,6 @@ echo.
 echo Запуск задачника с поддержкой трея...
 echo Иконка появится в системном трее (рядом с часами)
 echo.
-echo Программа запущена! Окно можно закрыть.
+echo Для остановки нажмите Ctrl+C
 echo.
-start "" python tray_app.py
-timeout /t 3 /nobreak >nul
-exit
+python tray_app.py

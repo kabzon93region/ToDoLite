@@ -29,11 +29,11 @@ class TaskManagerTray:
         image = Image.new('RGB', (64, 64), color='blue')
         draw = ImageDraw.Draw(image)
         draw.rectangle([16, 16, 48, 48], fill='white')
-        draw.text((20, 25), "📝", fill='black')
+        # Используем простой текст вместо эмодзи
+        draw.text((25, 25), "TD", fill='black')
         
         # Создаем меню трея
         menu = Menu(
-            MenuItem("Показать/скрыть консоль", self.toggle_console),
             MenuItem("Запустить сервер", self.start_server, enabled=lambda item: not self.is_server_running),
             MenuItem("Перезапустить сервер", self.restart_server),
             MenuItem("Остановить сервер", self.stop_server, enabled=lambda item: self.is_server_running),
@@ -66,11 +66,17 @@ class TaskManagerTray:
     def log_message(self, message):
         """Добавляет сообщение в консоль"""
         if self.console_text:
-            self.console_text.config(state=tk.NORMAL)
-            self.console_text.insert(tk.END, f"{time.strftime('%H:%M:%S')} - {message}\n")
-            self.console_text.see(tk.END)
-            self.console_text.config(state=tk.DISABLED)
-            self.console_window.update()
+            # Используем after_idle для безопасного обновления из другого потока
+            def update_console():
+                try:
+                    self.console_text.config(state=tk.NORMAL)
+                    self.console_text.insert(tk.END, f"{time.strftime('%H:%M:%S')} - {message}\n")
+                    self.console_text.see(tk.END)
+                    self.console_text.config(state=tk.DISABLED)
+                except:
+                    pass  # Игнорируем ошибки если окно закрыто
+            
+            self.console_window.after_idle(update_console)
     
     def toggle_console(self, icon=None, item=None):
         """Показывает/скрывает консоль"""
@@ -82,18 +88,24 @@ class TaskManagerTray:
     def show_console(self):
         """Показывает консоль"""
         if self.console_window:
-            self.console_window.deiconify()
-            self.console_window.lift()
-            self.console_window.focus_force()
-            self.is_console_visible = True
-            self.log_message("Консоль показана")
+            try:
+                self.console_window.deiconify()
+                self.console_window.lift()
+                self.console_window.focus_force()
+                self.is_console_visible = True
+                self.log_message("Консоль показана")
+            except:
+                pass  # Игнорируем ошибки если окно недоступно
     
     def hide_console(self):
         """Скрывает консоль"""
         if self.console_window:
-            self.console_window.withdraw()
-            self.is_console_visible = False
-            self.log_message("Консоль скрыта")
+            try:
+                self.console_window.withdraw()
+                self.is_console_visible = False
+                self.log_message("Консоль скрыта")
+            except:
+                pass  # Игнорируем ошибки если окно недоступно
     
     def start_server(self, icon=None, item=None):
         """Запускает сервер"""
@@ -104,20 +116,16 @@ class TaskManagerTray:
         try:
             self.log_message("Запуск сервера...")
             
-            # Запускаем сервер в отдельном процессе
+            # Запускаем сервер в отдельном процессе без консоли
             self.server_process = subprocess.Popen(
                 [sys.executable, "app.py"],
-                stdout=subprocess.PIPE,
-                stderr=subprocess.STDOUT,
-                universal_newlines=True,
-                bufsize=1
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
+                creationflags=subprocess.CREATE_NO_WINDOW if sys.platform == "win32" else 0
             )
             
             self.is_server_running = True
             self.log_message("Сервер запущен на http://localhost:5000")
-            
-            # Запускаем поток для чтения вывода сервера
-            threading.Thread(target=self.read_server_output, daemon=True).start()
             
         except Exception as e:
             self.log_message(f"Ошибка запуска сервера: {e}")
@@ -132,17 +140,9 @@ class TaskManagerTray:
             self.log_message("Остановка сервера...")
             
             if self.server_process:
-                # Отправляем сигнал завершения
-                self.server_process.terminate()
-                
-                # Ждем завершения процесса
-                try:
-                    self.server_process.wait(timeout=5)
-                except subprocess.TimeoutExpired:
-                    # Принудительно завершаем если не отвечает
-                    self.server_process.kill()
-                    self.server_process.wait()
-                
+                # Принудительно завершаем процесс
+                self.server_process.kill()
+                self.server_process.wait(timeout=3)
                 self.server_process = None
             
             self.is_server_running = False
@@ -155,18 +155,9 @@ class TaskManagerTray:
         """Перезапускает сервер"""
         self.log_message("Перезапуск сервера...")
         self.stop_server()
-        time.sleep(1)  # Небольшая пауза
+        time.sleep(1)  # Короткая пауза
         self.start_server()
     
-    def read_server_output(self):
-        """Читает вывод сервера и отображает в консоли"""
-        if self.server_process:
-            try:
-                for line in iter(self.server_process.stdout.readline, ''):
-                    if line:
-                        self.log_message(line.strip())
-            except Exception as e:
-                self.log_message(f"Ошибка чтения вывода сервера: {e}")
     
     def open_browser(self, icon=None, item=None):
         """Открывает задачник в браузере"""

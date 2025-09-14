@@ -1,0 +1,467 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Задача: {{ task[1] }}</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .back-btn {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            background: rgba(255,255,255,0.2);
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            text-decoration: none;
+            transition: background 0.3s;
+        }
+
+        .back-btn:hover {
+            background: rgba(255,255,255,0.3);
+        }
+
+        .task-content {
+            padding: 30px;
+        }
+
+        .task-header {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+
+        .task-info {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+        }
+
+        .task-title {
+            font-size: 1.8em;
+            font-weight: bold;
+            color: #495057;
+            margin-bottom: 15px;
+        }
+
+        .task-meta {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-bottom: 15px;
+        }
+
+        .task-badge {
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 0.9em;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+
+        .status-new { background: #e3f2fd; color: #1976d2; }
+        .status-think { background: #fff3e0; color: #f57c00; }
+        .status-later { background: #f3e5f5; color: #7b1fa2; }
+        .status-waiting { background: #e8f5e8; color: #388e3c; }
+        .status-working { background: #e1f5fe; color: #0288d1; }
+        .status-tracking { background: #fff8e1; color: #f9a825; }
+        .status-done { background: #e8f5e8; color: #2e7d32; }
+        .status-cancelled { background: #ffebee; color: #d32f2f; }
+
+        .priority-high { background: #ffebee; color: #d32f2e; }
+        .priority-medium { background: #fff3cd; color: #856404; }
+        .priority-low { background: #d1ecf1; color: #0c5460; }
+
+        .eisenhower-urgent-important { background: #ffebee; color: #d32f2e; border: 2px solid #d32f2e; }
+        .eisenhower-urgent-not-important { background: #fff3cd; color: #856404; border: 2px solid #f57c00; }
+        .eisenhower-not-urgent-important { background: #e8f5e8; color: #2e7d32; border: 2px solid #2e7d32; }
+        .eisenhower-not-urgent-not-important { background: #f5f5f5; color: #666; border: 2px solid #999; }
+
+        .task-dates {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+
+        .date-item {
+            background: white;
+            padding: 10px;
+            border-radius: 8px;
+            border-left: 4px solid #667eea;
+        }
+
+        .date-label {
+            font-weight: bold;
+            color: #495057;
+            margin-bottom: 5px;
+        }
+
+        .date-value {
+            color: #6c757d;
+        }
+
+        .task-description {
+            color: #6c757d;
+            line-height: 1.6;
+            margin-bottom: 20px;
+        }
+
+        .task-actions {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            text-decoration: none;
+            display: inline-block;
+            transition: transform 0.2s;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+        }
+
+        .btn-danger {
+            background: #dc3545;
+        }
+
+        .btn-success {
+            background: #28a745;
+        }
+
+        .form-section {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+        }
+
+        .form-section h3 {
+            margin-bottom: 15px;
+            color: #495057;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #495057;
+        }
+
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #dee2e6;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .comments-section {
+            margin-top: 30px;
+        }
+
+        .comment {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            border-left: 4px solid #667eea;
+        }
+
+        .comment-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .comment-date {
+            color: #6c757d;
+            font-size: 0.9em;
+        }
+
+        .comment-text {
+            color: #495057;
+            line-height: 1.5;
+        }
+
+        .related-threads {
+            margin-top: 20px;
+        }
+
+        .thread-link {
+            display: block;
+            color: #667eea;
+            text-decoration: none;
+            margin-bottom: 5px;
+            padding: 5px 0;
+            border-bottom: 1px solid #e9ecef;
+        }
+
+        .thread-link:hover {
+            color: #764ba2;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                margin: 10px;
+                border-radius: 10px;
+            }
+            
+            .task-header {
+                grid-template-columns: 1fr;
+            }
+            
+            .task-dates {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <a href="/" class="back-btn">← Назад к списку</a>
+            <h1>📋 Детали задачи</h1>
+        </div>
+
+        <div class="task-content">
+            <div class="task-header">
+                <div class="task-info">
+                    <div class="task-title">{{ task[1] }}</div>
+                    
+                    <div class="task-meta">
+                        <span class="task-badge status-{{ task[3] }}">
+                            {% if task[3] == 'new' %}Новая
+                            {% elif task[3] == 'think' %}На подумать
+                            {% elif task[3] == 'later' %}На потом
+                            {% elif task[3] == 'waiting' %}Ждем кого-то
+                            {% elif task[3] == 'working' %}В работе
+                            {% elif task[3] == 'tracking' %}Отслеживаем
+                            {% elif task[3] == 'done' %}Готово
+                            {% elif task[3] == 'cancelled' %}Отменено
+                            {% endif %}
+                        </span>
+                        <span class="task-badge priority-{{ task[6] }}">
+                            {% if task[6] == 'high' %}Высокий
+                            {% elif task[6] == 'medium' %}Средний
+                            {% elif task[6] == 'low' %}Низкий
+                            {% endif %}
+                        </span>
+                        <span class="task-badge eisenhower-{{ task[7] }}">
+                            {% if task[7] == 'urgent_important' %}🔥 Важные и срочные
+                            {% elif task[7] == 'urgent_not_important' %}⚡ Срочные не важные
+                            {% elif task[7] == 'not_urgent_important' %}⭐ Важные не срочные
+                            {% elif task[7] == 'not_urgent_not_important' %}📋 Не важные не срочные
+                            {% endif %}
+                        </span>
+                    </div>
+
+                    <div class="task-dates">
+                        <div class="date-item">
+                            <div class="date-label">📅 Дата отложения</div>
+                            <div class="date-value">{{ task[10] or 'Не указана' }}</div>
+                        </div>
+                        <div class="date-item">
+                            <div class="date-label">⏰ Срок выполнения</div>
+                            <div class="date-value">{{ task[11] or 'Не указан' }}</div>
+                        </div>
+                        <div class="date-item">
+                            <div class="date-label">📅 Дата создания</div>
+                            <div class="date-value">{{ task[12] }}</div>
+                        </div>
+                        <div class="date-item">
+                            <div class="date-label">👤 Ответственный</div>
+                            <div class="date-value">{{ task[8] or 'Не назначен' }}</div>
+                        </div>
+                    </div>
+
+                    {% if task[2] %}
+                    <div class="task-description">
+                        <strong>Краткое описание:</strong><br>
+                        {{ task[2] }}
+                    </div>
+                    {% endif %}
+
+                    {% if task[4] %}
+                    <div class="task-description">
+                        <strong>Подробное описание:</strong><br>
+                        {{ task[4] }}
+                    </div>
+                    {% endif %}
+
+                    {% if task[9] %}
+                    <div class="related-threads">
+                        <strong>Связанные треды:</strong><br>
+                        {% for thread in task[9].split(',') %}
+                            {% if thread.strip() %}
+                            <a href="{{ thread.strip() }}" target="_blank" class="thread-link">{{ thread.strip() }}</a>
+                            {% endif %}
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                </div>
+
+                <div class="task-actions">
+                    <a href="/delete_task/{{ task[0] }}" class="btn btn-danger" 
+                       onclick="return confirm('Вы уверены, что хотите удалить эту задачу?')">Удалить задачу</a>
+                </div>
+            </div>
+
+            <div class="form-section">
+                <h3>Редактировать задачу</h3>
+                <form method="POST" action="/update_task/{{ task[0] }}">
+                    <div class="form-group">
+                        <label for="title">Название задачи *</label>
+                        <input type="text" id="title" name="title" value="{{ task[1] }}" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="short_description">Краткое описание</label>
+                        <input type="text" id="short_description" name="short_description" value="{{ task[2] or '' }}">
+                    </div>
+                    <div class="form-group">
+                        <label for="full_description">Подробное описание</label>
+                        <textarea id="full_description" name="full_description" rows="3">{{ task[4] or '' }}</textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="status">Статус</label>
+                        <select id="status" name="status">
+                            <option value="new" {{ 'selected' if task[3] == 'new' else '' }}>Новая</option>
+                            <option value="think" {{ 'selected' if task[3] == 'think' else '' }}>На подумать</option>
+                            <option value="later" {{ 'selected' if task[3] == 'later' else '' }}>На потом</option>
+                            <option value="waiting" {{ 'selected' if task[3] == 'waiting' else '' }}>Ждем кого-то</option>
+                            <option value="working" {{ 'selected' if task[3] == 'working' else '' }}>В работе</option>
+                            <option value="tracking" {{ 'selected' if task[3] == 'tracking' else '' }}>Отслеживаем</option>
+                            <option value="done" {{ 'selected' if task[3] == 'done' else '' }}>Готово</option>
+                            <option value="cancelled" {{ 'selected' if task[3] == 'cancelled' else '' }}>Отменено</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="priority">Приоритет</label>
+                        <select id="priority" name="priority">
+                            <option value="low" {{ 'selected' if task[6] == 'low' else '' }}>Низкий</option>
+                            <option value="medium" {{ 'selected' if task[6] == 'medium' else '' }}>Средний</option>
+                            <option value="high" {{ 'selected' if task[6] == 'high' else '' }}>Высокий</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="eisenhower_priority">Приоритет Эйзенхауэра</label>
+                        <select id="eisenhower_priority" name="eisenhower_priority">
+                            <option value="urgent_important" {{ 'selected' if task[7] == 'urgent_important' else '' }}>🔥 Важные и срочные</option>
+                            <option value="urgent_not_important" {{ 'selected' if task[7] == 'urgent_not_important' else '' }}>⚡ Срочные не важные</option>
+                            <option value="not_urgent_important" {{ 'selected' if task[7] == 'not_urgent_important' else '' }}>⭐ Важные не срочные</option>
+                            <option value="not_urgent_not_important" {{ 'selected' if task[7] == 'not_urgent_not_important' else '' }}>📋 Не важные не срочные</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="assigned_to">Ответственный</label>
+                        <input type="text" id="assigned_to" name="assigned_to" value="{{ task[8] or '' }}">
+                    </div>
+                    <div class="form-group">
+                        <label for="scheduled_date">Дата отложения</label>
+                        <input type="date" id="scheduled_date" name="scheduled_date" value="{{ task[10] or '' }}">
+                    </div>
+                    <div class="form-group">
+                        <label for="due_date">Срок выполнения</label>
+                        <input type="date" id="due_date" name="due_date" value="{{ task[11] or '' }}">
+                    </div>
+                    <div class="form-group">
+                        <label for="related_threads">Связанные треды (ссылки через запятую)</label>
+                        <input type="text" id="related_threads" name="related_threads" value="{{ task[9] or '' }}" placeholder="https://example.com/thread1, https://example.com/thread2">
+                    </div>
+                    <button type="submit" class="btn">Сохранить изменения</button>
+                </form>
+            </div>
+
+            <div class="comments-section">
+                <h3>Комментарии</h3>
+                
+                <div class="form-section">
+                    <form method="POST" action="/add_comment/{{ task[0] }}">
+                        <div class="form-group">
+                            <label for="comment">Добавить комментарий</label>
+                            <textarea id="comment" name="comment" rows="3" placeholder="Введите ваш комментарий..." required></textarea>
+                        </div>
+                        <button type="submit" class="btn">Добавить комментарий</button>
+                    </form>
+                </div>
+
+                {% if comments %}
+                    {% for comment in comments %}
+                    <div class="comment">
+                        <div class="comment-header">
+                            <strong>Комментарий</strong>
+                            <span class="comment-date">{{ comment[3] }}</span>
+                        </div>
+                        <div class="comment-text">{{ comment[2] }}</div>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <p style="color: #6c757d; text-align: center; padding: 20px;">Пока нет комментариев</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</body>
+</html>
