@@ -479,11 +479,7 @@
                         <label for="related_threads">Связанные треды (ссылки через запятую)</label>
                         <input type="text" id="related_threads" name="related_threads" value="{{ task[8] or '' }}" placeholder="https://example.com/thread1, https://example.com/thread2">
                     </div>
-                    {% if task[3] not in ['done', 'cancelled'] %}
                     <button type="submit" class="btn">Сохранить изменения</button>
-                    {% else %}
-                    <p style="color:#6c757d; margin-top:10px;">Редактирование недоступно для завершённых или отменённых задач. Доступны только комментарии.</p>
-                    {% endif %}
                 </form>
             </div>
 
@@ -535,10 +531,12 @@ function toggleEdit(){
 
 // Авто-сворачивание формы редактирования, если задача завершена/отменена
 document.addEventListener('DOMContentLoaded', function(){
-  const isLocked = ['done','cancelled'].includes('{{ task[3] }}');
-  if(isLocked){
-    const form = document.getElementById('editForm');
-    form.style.display = 'none';
+  const form = document.getElementById('editForm');
+  const icon = document.getElementById('editToggleIcon');
+  var openEdit = '{{ request.args.get('open_edit', '0') }}';
+  if(openEdit === '1'){
+    form.style.display = 'block';
+    if(icon){ icon.classList.add('rotated'); }
   }
 });
 </script>
