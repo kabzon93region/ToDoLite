@@ -134,6 +134,23 @@
             border: 1px solid #3c3c3c;
         }
 
+        /* Унифицированные карточки информации (для описаний и прочих полей) */
+        .info-item {
+            background: #1e1e1e;
+            padding: 10px;
+            border-radius: 8px;
+            border-left: 4px solid #569cd6;
+            border: 1px solid #3c3c3c;
+            margin-bottom: 12px;
+        }
+        .info-label {
+            font-weight: bold;
+            color: #d4d4d4;
+            margin-bottom: 6px;
+            display: block;
+        }
+        .info-value { color: #c5c5c5; line-height: 1.5; }
+
         .date-label {
             font-weight: bold;
             color: #495057;
@@ -368,16 +385,16 @@
                     </div>
 
                     {% if task[2] %}
-                    <div class="task-description">
-                        <strong>Краткое описание:</strong><br>
-                        {{ task[2] }}
+                    <div class="info-item">
+                        <span class="info-label">Краткое описание</span>
+                        <div class="info-value">{{ task[2] }}</div>
                     </div>
                     {% endif %}
 
                     {% if task[3] %}
-                    <div class="task-description">
-                        <strong>Подробное описание:</strong><br>
-                        {{ task[3] }}
+                    <div class="info-item">
+                        <span class="info-label">Подробное описание</span>
+                        <div class="info-value">{{ task[3] }}</div>
                     </div>
                     {% endif %}
 
@@ -406,7 +423,7 @@
                         <label for="title">Название задачи *</label>
                         <input type="text" id="title" name="title" value="{{ task[1] }}" required>
                     </div>
-                    <div class="form-grid" style="grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px;">
+                    <div class="form-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px;">
                         <div class="form-group">
                             <label for="short_description">Краткое описание</label>
                             <input type="text" id="short_description" name="short_description" value="{{ task[2] or '' }}">
