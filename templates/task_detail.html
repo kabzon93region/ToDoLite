@@ -318,28 +318,28 @@
                     <div class="task-title">{{ task[1] }}</div>
                     
                     <div class="task-meta">
-                        <span class="task-badge status-{{ task[3] }}">
-                            {% if task[3] == 'new' %}Новая
-                            {% elif task[3] == 'think' %}На подумать
-                            {% elif task[3] == 'later' %}На потом
-                            {% elif task[3] == 'waiting' %}Ждем кого-то
-                            {% elif task[3] == 'working' %}В работе
-                            {% elif task[3] == 'tracking' %}Отслеживаем
-                            {% elif task[3] == 'done' %}Готово
-                            {% elif task[3] == 'cancelled' %}Отменено
+                        <span class="task-badge status-{{ task[4] }}">
+                            {% if task[4] == 'new' %}Новая
+                            {% elif task[4] == 'think' %}На подумать
+                            {% elif task[4] == 'later' %}На потом
+                            {% elif task[4] == 'waiting' %}Ждем кого-то
+                            {% elif task[4] == 'working' %}В работе
+                            {% elif task[4] == 'tracking' %}Отслеживаем
+                            {% elif task[4] == 'done' %}Готово
+                            {% elif task[4] == 'cancelled' %}Отменено
                             {% endif %}
                         </span>
-                        <span class="task-badge priority-{{ task[6] }}">
-                            {% if task[6] == 'high' %}Высокий
-                            {% elif task[6] == 'medium' %}Средний
-                            {% elif task[6] == 'low' %}Низкий
+                        <span class="task-badge priority-{{ task[5] }}">
+                            {% if task[5] == 'high' %}Высокий
+                            {% elif task[5] == 'medium' %}Средний
+                            {% elif task[5] == 'low' %}Низкий
                             {% endif %}
                         </span>
-                        <span class="task-badge eisenhower-{{ task[7] }}">
-                            {% if task[7] == 'urgent_important' %}🔥 Важные и срочные
-                            {% elif task[7] == 'urgent_not_important' %}⚡ Срочные не важные
-                            {% elif task[7] == 'not_urgent_important' %}⭐ Важные не срочные
-                            {% elif task[7] == 'not_urgent_not_important' %}📋 Не важные не срочные
+                        <span class="task-badge eisenhower-{{ task[6] }}">
+                            {% if task[6] == 'urgent_important' %}🔥 Важные и срочные
+                            {% elif task[6] == 'urgent_not_important' %}⚡ Срочные не важные
+                            {% elif task[6] == 'not_urgent_important' %}⭐ Важные не срочные
+                            {% elif task[6] == 'not_urgent_not_important' %}📋 Не важные не срочные
                             {% endif %}
                         </span>
                     </div>
@@ -347,23 +347,23 @@
                     <div class="task-dates">
                         <div class="date-item">
                             <div class="date-label">📅 Дата отложения</div>
-                            <div class="date-value">{{ task[10] or 'Не указана' }}</div>
+                            <div class="date-value">{{ task[9]|ru_date or 'Не указана' }}</div>
                         </div>
                         <div class="date-item">
                             <div class="date-label">⏰ Срок выполнения</div>
-                            <div class="date-value">{{ task[11] or 'Не указан' }}</div>
+                            <div class="date-value">{{ task[10]|ru_date or 'Не указан' }}</div>
                         </div>
                         <div class="date-item">
                             <div class="date-label">📅 Дата создания</div>
-                            <div class="date-value">{{ task[12] }}</div>
+                            <div class="date-value">{{ task[11]|ru_date }}</div>
                         </div>
                         <div class="date-item">
                             <div class="date-label">✅ Завершено</div>
-                            <div class="date-value">{{ task[14] or '—' }}</div>
+                            <div class="date-value">{{ task[13]|ru_date or '—' }}</div>
                         </div>
                         <div class="date-item">
                             <div class="date-label">👤 Ответственный</div>
-                            <div class="date-value">{{ task[8] or 'Не назначен' }}</div>
+                            <div class="date-value">{{ task[7] or 'Не назначен' }}</div>
                         </div>
                     </div>
 
@@ -374,17 +374,17 @@
                     </div>
                     {% endif %}
 
-                    {% if task[4] %}
+                    {% if task[3] %}
                     <div class="task-description">
                         <strong>Подробное описание:</strong><br>
-                        {{ task[4] }}
+                        {{ task[3] }}
                     </div>
                     {% endif %}
 
-                    {% if task[9] %}
+                    {% if task[8] %}
                     <div class="related-threads">
                         <strong>Связанные треды:</strong><br>
-                        {% for thread in task[9].split(',') %}
+                        {% for thread in task[8].split(',') %}
                             {% if thread.strip() %}
                             <a href="{{ thread.strip() }}" target="_blank" class="thread-link">{{ thread.strip() }}</a>
                             {% endif %}
@@ -412,53 +412,53 @@
                     </div>
                     <div class="form-group">
                         <label for="full_description">Подробное описание</label>
-                        <textarea id="full_description" name="full_description" rows="3">{{ task[4] or '' }}</textarea>
+                        <textarea id="full_description" name="full_description" rows="3">{{ task[3] or '' }}</textarea>
                     </div>
                     <div class="form-group">
                         <label for="status">Статус</label>
                         <select id="status" name="status">
-                            <option value="new" {{ 'selected' if task[3] == 'new' else '' }}>Новая</option>
-                            <option value="think" {{ 'selected' if task[3] == 'think' else '' }}>На подумать</option>
-                            <option value="later" {{ 'selected' if task[3] == 'later' else '' }}>На потом</option>
-                            <option value="waiting" {{ 'selected' if task[3] == 'waiting' else '' }}>Ждем кого-то</option>
-                            <option value="working" {{ 'selected' if task[3] == 'working' else '' }}>В работе</option>
-                            <option value="tracking" {{ 'selected' if task[3] == 'tracking' else '' }}>Отслеживаем</option>
-                            <option value="done" {{ 'selected' if task[3] == 'done' else '' }}>Готово</option>
-                            <option value="cancelled" {{ 'selected' if task[3] == 'cancelled' else '' }}>Отменено</option>
+                            <option value="new" {{ 'selected' if task[4] == 'new' else '' }}>Новая</option>
+                            <option value="think" {{ 'selected' if task[4] == 'think' else '' }}>На подумать</option>
+                            <option value="later" {{ 'selected' if task[4] == 'later' else '' }}>На потом</option>
+                            <option value="waiting" {{ 'selected' if task[4] == 'waiting' else '' }}>Ждем кого-то</option>
+                            <option value="working" {{ 'selected' if task[4] == 'working' else '' }}>В работе</option>
+                            <option value="tracking" {{ 'selected' if task[4] == 'tracking' else '' }}>Отслеживаем</option>
+                            <option value="done" {{ 'selected' if task[4] == 'done' else '' }}>Готово</option>
+                            <option value="cancelled" {{ 'selected' if task[4] == 'cancelled' else '' }}>Отменено</option>
                         </select>
                     </div>
                     <div class="form-group">
                         <label for="priority">Приоритет</label>
                         <select id="priority" name="priority">
-                            <option value="low" {{ 'selected' if task[6] == 'low' else '' }}>Низкий</option>
-                            <option value="medium" {{ 'selected' if task[6] == 'medium' else '' }}>Средний</option>
-                            <option value="high" {{ 'selected' if task[6] == 'high' else '' }}>Высокий</option>
+                            <option value="low" {{ 'selected' if task[5] == 'low' else '' }}>Низкий</option>
+                            <option value="medium" {{ 'selected' if task[5] == 'medium' else '' }}>Средний</option>
+                            <option value="high" {{ 'selected' if task[5] == 'high' else '' }}>Высокий</option>
                         </select>
                     </div>
                     <div class="form-group">
                         <label for="eisenhower_priority">Приоритет Эйзенхауэра</label>
                         <select id="eisenhower_priority" name="eisenhower_priority">
-                            <option value="urgent_important" {{ 'selected' if task[7] == 'urgent_important' else '' }}>🔥 Важные и срочные</option>
-                            <option value="urgent_not_important" {{ 'selected' if task[7] == 'urgent_not_important' else '' }}>⚡ Срочные не важные</option>
-                            <option value="not_urgent_important" {{ 'selected' if task[7] == 'not_urgent_important' else '' }}>⭐ Важные не срочные</option>
-                            <option value="not_urgent_not_important" {{ 'selected' if task[7] == 'not_urgent_not_important' else '' }}>📋 Не важные не срочные</option>
+                            <option value="urgent_important" {{ 'selected' if task[6] == 'urgent_important' else '' }}>🔥 Важные и срочные</option>
+                            <option value="urgent_not_important" {{ 'selected' if task[6] == 'urgent_not_important' else '' }}>⚡ Срочные не важные</option>
+                            <option value="not_urgent_important" {{ 'selected' if task[6] == 'not_urgent_important' else '' }}>⭐ Важные не срочные</option>
+                            <option value="not_urgent_not_important" {{ 'selected' if task[6] == 'not_urgent_not_important' else '' }}>📋 Не важные не срочные</option>
                         </select>
                     </div>
                     <div class="form-group">
                         <label for="assigned_to">Ответственный</label>
-                        <input type="text" id="assigned_to" name="assigned_to" value="{{ task[8] or '' }}">
+                        <input type="text" id="assigned_to" name="assigned_to" value="{{ task[7] or '' }}">
                     </div>
                     <div class="form-group">
                         <label for="scheduled_date">Дата отложения</label>
-                        <input type="date" id="scheduled_date" name="scheduled_date" value="{{ task[10] or '' }}">
+                        <input type="date" id="scheduled_date" name="scheduled_date" value="{{ task[9] or '' }}">
                     </div>
                     <div class="form-group">
                         <label for="due_date">Срок выполнения</label>
-                        <input type="date" id="due_date" name="due_date" value="{{ task[11] or '' }}">
+                        <input type="date" id="due_date" name="due_date" value="{{ task[10] or '' }}">
                     </div>
                     <div class="form-group">
                         <label for="related_threads">Связанные треды (ссылки через запятую)</label>
-                        <input type="text" id="related_threads" name="related_threads" value="{{ task[9] or '' }}" placeholder="https://example.com/thread1, https://example.com/thread2">
+                        <input type="text" id="related_threads" name="related_threads" value="{{ task[8] or '' }}" placeholder="https://example.com/thread1, https://example.com/thread2">
                     </div>
                     {% if task[3] not in ['done', 'cancelled'] %}
                     <button type="submit" class="btn">Сохранить изменения</button>

@@ -37,10 +37,10 @@
     
     <div class="task-dates">
         {% if task[9] %}
-        <span>📅 Отложено: {{ task[9] }}</span>
+        <span>📅 Отложено: {{ task[9]|ru_date }}</span>
         {% endif %}
         {% if task[10] %}
-        <span>⏰ Срок: {{ task[10] }}</span>
+        <span>⏰ Срок: {{ task[10]|ru_date }}</span>
         {% endif %}
     </div>
     

@@ -127,6 +127,41 @@ def load_config():
             }
         }
 
+
+# Фильтр Jinja для форматирования даты в российском формате (ДД.ММ.ГГГГ)
+def format_date_ru(value: str):
+    if not value:
+        return ''
+    try:
+        # Попытка ISO с временем
+        # Обрезаем возможные микросекунды/таймзону
+        cleaned = str(value).strip()
+        # Если только дата
+        try:
+            dt = datetime.strptime(cleaned[:10], '%Y-%m-%d')
+            return dt.strftime('%d.%m.%Y')
+        except Exception:
+            pass
+        # Дата+время
+        for fmt in ('%Y-%m-%d %H:%M:%S', '%Y-%m-%dT%H:%M:%S', '%Y-%m-%d %H:%M:%S.%f', '%Y-%m-%dT%H:%M:%S.%f'):
+            try:
+                dt = datetime.strptime(cleaned[:26], fmt)
+                return dt.strftime('%d.%m.%Y')
+            except Exception:
+                continue
+        # Последняя попытка: fromisoformat если доступно
+        try:
+            dt = datetime.fromisoformat(cleaned)
+            return dt.strftime('%d.%m.%Y')
+        except Exception:
+            return cleaned
+    except Exception:
+        return ''
+
+
+# Регистрируем фильтр в Jinja
+app.jinja_env.filters['ru_date'] = format_date_ru
+
 # Получить задачу по ID с комментариями
 def get_task_with_comments(task_id):
     conn = sqlite3.connect('tasks.db')
