@@ -44,6 +44,20 @@ class TaskManagerTray:
         
         return Icon("Задачник", image, menu=menu)
     
+    def update_menu(self):
+        """Обновляет состояние меню"""
+        if hasattr(self, 'icon') and self.icon:
+            # Создаем новое меню с актуальным состоянием
+            new_menu = Menu(
+                MenuItem("Запустить сервер", self.start_server, enabled=lambda item: not self.is_server_running),
+                MenuItem("Перезапустить сервер", self.restart_server),
+                MenuItem("Остановить сервер", self.stop_server, enabled=lambda item: self.is_server_running),
+                Menu.SEPARATOR,
+                MenuItem("Открыть в браузере", self.open_browser),
+                MenuItem("Выход", self.quit_app)
+            )
+            self.icon.menu = new_menu
+    
     def create_console_window(self):
         """Создает скрытое окно консоли"""
         self.console_window = tk.Tk()
@@ -124,11 +138,20 @@ class TaskManagerTray:
                 creationflags=subprocess.CREATE_NO_WINDOW if sys.platform == "win32" else 0
             )
             
-            self.is_server_running = True
-            self.log_message("Сервер запущен на http://localhost:5000")
+            # Проверяем, что процесс действительно запустился
+            if self.server_process.poll() is None:
+                self.is_server_running = True
+                self.log_message("Сервер запущен на http://localhost:5000")
+                self.update_menu()  # Обновляем меню
+            else:
+                self.log_message("Ошибка: Сервер не запустился")
+                self.server_process = None
+                self.is_server_running = False
             
         except Exception as e:
             self.log_message(f"Ошибка запуска сервера: {e}")
+            self.is_server_running = False
+            self.server_process = None
     
     def stop_server(self, icon=None, item=None):
         """Останавливает сервер"""
@@ -140,22 +163,47 @@ class TaskManagerTray:
             self.log_message("Остановка сервера...")
             
             if self.server_process:
-                # Принудительно завершаем процесс
-                self.server_process.kill()
-                self.server_process.wait(timeout=3)
+                # Сначала пытаемся корректно завершить
+                try:
+                    self.server_process.terminate()
+                    self.server_process.wait(timeout=5)
+                except subprocess.TimeoutExpired:
+                    # Если не отвечает, принудительно завершаем
+                    self.log_message("Принудительное завершение сервера...")
+                    self.server_process.kill()
+                    self.server_process.wait(timeout=3)
+                except Exception as e:
+                    self.log_message(f"Ошибка при завершении: {e}")
+                    # Пытаемся принудительно завершить
+                    try:
+                        self.server_process.kill()
+                        self.server_process.wait(timeout=3)
+                    except:
+                        pass
+                
                 self.server_process = None
             
             self.is_server_running = False
             self.log_message("Сервер остановлен")
+            self.update_menu()  # Обновляем меню
             
         except Exception as e:
             self.log_message(f"Ошибка остановки сервера: {e}")
+            # Сбрасываем состояние даже при ошибке
+            self.is_server_running = False
+            self.server_process = None
     
     def restart_server(self, icon=None, item=None):
         """Перезапускает сервер"""
         self.log_message("Перезапуск сервера...")
-        self.stop_server()
-        time.sleep(1)  # Короткая пауза
+        
+        # Останавливаем сервер
+        if self.is_server_running:
+            self.stop_server()
+            # Ждем полной остановки
+            time.sleep(2)
+        
+        # Запускаем сервер заново
         self.start_server()
     
     
@@ -173,11 +221,24 @@ class TaskManagerTray:
         
         # Останавливаем сервер если запущен
         if self.is_server_running:
-            self.stop_server()
+            self.log_message("Остановка сервера...")
+            try:
+                if self.server_process:
+                    self.server_process.terminate()
+                    self.server_process.wait(timeout=3)
+            except:
+                try:
+                    if self.server_process:
+                        self.server_process.kill()
+                except:
+                    pass
         
         # Закрываем консоль
         if self.console_window:
-            self.console_window.quit()
+            try:
+                self.console_window.quit()
+            except:
+                pass
         
         # Останавливаем иконку трея
         self.icon.stop()
@@ -189,6 +250,19 @@ class TaskManagerTray:
         
         # Автоматически запускаем сервер
         self.start_server()
+        
+        # Проверяем состояние сервера через 2 секунды
+        def check_server_status():
+            if self.is_server_running and self.server_process:
+                if self.server_process.poll() is not None:
+                    # Сервер завершился неожиданно
+                    self.log_message("Сервер завершился неожиданно")
+                    self.is_server_running = False
+                    self.server_process = None
+                    self.update_menu()
+        
+        # Запускаем проверку через 2 секунды
+        threading.Timer(2.0, check_server_status).start()
         
         # Запускаем иконку трея
         self.icon.run()

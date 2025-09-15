@@ -1,0 +1,34 @@
+{
+  "statuses_order": [
+    "new",
+    "think",
+    "later",
+    "waiting",
+    "working",
+    "tracking",
+    "done",
+    "cancelled"
+  ],
+  "statuses_labels": {
+    "new": "🆕 Новая",
+    "think": "🤔 На подумать",
+    "later": "⏰ На потом",
+    "waiting": "⏳ Ждем кого-то",
+    "working": "⚡ В работе",
+    "tracking": "👀 Отслеживаем",
+    "done": "✅ Готово",
+    "cancelled": "❌ Отменено"
+  },
+  "eisenhower_order": [
+    "urgent_important",
+    "urgent_not_important",
+    "not_urgent_important",
+    "not_urgent_not_important"
+  ],
+  "eisenhower_labels": {
+    "urgent_important": "🔥 Важные и срочные",
+    "urgent_not_important": "⚡ Срочные не важные",
+    "not_urgent_important": "⭐ Важные не срочные",
+    "not_urgent_not_important": "📋 Не важные не срочные"
+  }
+}

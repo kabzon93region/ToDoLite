@@ -1,4 +1,5 @@
 from flask import Flask, render_template, request, redirect, url_for, jsonify
+import json
 import sqlite3
 import os
 import signal
@@ -43,7 +44,8 @@ def init_db():
             ('assigned_to', 'TEXT'),
             ('related_threads', 'TEXT'),
             ('scheduled_date', 'DATE'),
-            ('due_date', 'DATE')
+            ('due_date', 'DATE'),
+            ('completed_at', 'TIMESTAMP')
         ]
         
         for col_name, col_type in new_columns:
@@ -68,7 +70,8 @@ def init_db():
                       scheduled_date DATE,
                       due_date DATE,
                       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                      updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP)''')
+                      updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                      completed_at TIMESTAMP)''')
     
     # Создаем таблицу комментариев
     c.execute('''CREATE TABLE IF NOT EXISTS task_comments
@@ -106,13 +109,48 @@ def get_tasks_by_mode(mode):
     conn.close()
     return tasks
 
+
+def load_config():
+    """Загружает конфигурацию из config.json"""
+    try:
+        with open('config.json', 'r', encoding='utf-8') as f:
+            return json.load(f)
+    except Exception:
+        return {
+            "statuses_order": ["new","think","later","waiting","working","tracking","done","cancelled"],
+            "statuses_labels": {
+                "new": "🆕 Новая","think": "🤔 На подумать","later": "⏰ На потом","waiting": "⏳ Ждем кого-то","working": "⚡ В работе","tracking": "👀 Отслеживаем","done": "✅ Готово","cancelled": "❌ Отменено"
+            },
+            "eisenhower_order": ["urgent_important","urgent_not_important","not_urgent_important","not_urgent_not_important"],
+            "eisenhower_labels": {
+                "urgent_important": "🔥 Важные и срочные","urgent_not_important": "⚡ Срочные не важные","not_urgent_important": "⭐ Важные не срочные","not_urgent_not_important": "📋 Не важные не срочные"
+            }
+        }
+
 # Получить задачу по ID с комментариями
 def get_task_with_comments(task_id):
     conn = sqlite3.connect('tasks.db')
     c = conn.cursor()
     
     # Получаем задачу
-    c.execute("SELECT * FROM tasks WHERE id = ?", (task_id,))
+    c.execute("""
+        SELECT 
+            id,
+            title,
+            short_description,
+            full_description,
+            status,
+            priority,
+            eisenhower_priority,
+            assigned_to,
+            related_threads,
+            scheduled_date,
+            due_date,
+            created_at,
+            updated_at,
+            completed_at
+        FROM tasks WHERE id = ?
+    """, (task_id,))
     task = c.fetchone()
     
     # Получаем комментарии
@@ -140,11 +178,31 @@ def update_task(task_id, title, short_description, full_description, status, pri
                 eisenhower_priority, assigned_to, related_threads, scheduled_date, due_date):
     conn = sqlite3.connect('tasks.db')
     c = conn.cursor()
-    c.execute("""UPDATE tasks SET title=?, short_description=?, full_description=?, status=?, 
-                 priority=?, eisenhower_priority=?, assigned_to=?, related_threads=?, 
-                 scheduled_date=?, due_date=?, updated_at=CURRENT_TIMESTAMP WHERE id=?""",
-              (title, short_description, full_description, status, priority, eisenhower_priority,
-               assigned_to, related_threads, scheduled_date, due_date, task_id))
+    # Если статус переводится в 'done', проставляем completed_at только один раз
+    c.execute("""
+        UPDATE tasks SET 
+            title=?, 
+            short_description=?, 
+            full_description=?, 
+            status=?, 
+            priority=?, 
+            eisenhower_priority=?, 
+            assigned_to=?, 
+            related_threads=?, 
+            scheduled_date=?, 
+            due_date=?, 
+            updated_at=CURRENT_TIMESTAMP,
+            completed_at=CASE 
+                WHEN ?='done' AND (completed_at IS NULL OR completed_at='') THEN CURRENT_TIMESTAMP 
+                ELSE completed_at 
+            END
+        WHERE id=?
+    """,
+        (
+            title, short_description, full_description, status, priority, eisenhower_priority,
+            assigned_to, related_threads, scheduled_date, due_date, status, task_id
+        )
+    )
     conn.commit()
     conn.close()
 
@@ -168,7 +226,8 @@ def delete_task(task_id):
 def index():
     mode = request.args.get('mode', 'kanban')
     tasks = get_tasks_by_mode(mode)
-    return render_template('index.html', tasks=tasks, current_mode=mode)
+    cfg = load_config()
+    return render_template('index.html', tasks=tasks, current_mode=mode, cfg=cfg)
 
 @app.route('/task/<int:task_id>')
 def view_task(task_id):
