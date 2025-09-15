@@ -20,11 +20,11 @@ call ToDoLite_venv\Scripts\activate.bat
 
 echo.
 echo Обновление pip...
-python -m pip install --upgrade pip
+python -m pip install --trusted-host pypi.org --trusted-host files.pythonhosted.org --trusted-host pypi.org:443 --trusted-host files.pythonhosted.org:443 --upgrade pip
 
 echo.
 echo Установка зависимостей...
-pip install -r requirements.txt
+pip install --trusted-host pypi.org --trusted-host files.pythonhosted.org --trusted-host pypi.org:443 --trusted-host files.pythonhosted.org:443 -r requirements.txt
 if errorlevel 1 (
     echo ОШИБКА: Не удалось установить зависимости
     pause

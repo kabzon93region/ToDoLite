@@ -13,8 +13,9 @@
 
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            font-size: 12px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            font-size: 13px;
+            background: #1e1e1e;
+            color: #d4d4d4;
             min-height: 100vh;
             padding: 15px;
         }
@@ -23,17 +24,18 @@
             max-width: 94%;
             width: 94%;
             margin: 0 auto;
-            background: white;
+            background: #1e1e1e;
             border-radius: 10px;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
             overflow: hidden;
         }
 
         .header {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
+            background: #252526;
+            color: #d4d4d4;
             padding: 8px 15px;
             text-align: center;
+            border: 1px solid #3c3c3c;
         }
 
         .mode-selector {
@@ -44,9 +46,9 @@
 
         .mode-btn {
             padding: 6px 12px;
-            border: 2px solid white;
+            border: 1px solid #569cd6;
             background: transparent;
-            color: white;
+            color: #d4d4d4;
             border-radius: 15px;
             cursor: pointer;
             font-size: 12px;
@@ -55,17 +57,18 @@
         }
 
         .mode-btn.active {
-            background: white;
-            color: #667eea;
+            background: #569cd6;
+            color: #1e1e1e;
+            border-color: #569cd6;
         }
 
         .mode-btn:hover {
-            background: rgba(255,255,255,0.2);
+            background: rgba(86,156,214,0.15);
         }
 
         .add-task-section {
-            background: #f8f9fa;
-            border-bottom: 1px solid #dee2e6;
+            background: #1e1e1e;
+            border-bottom: 1px solid #3c3c3c;
         }
 
         .add-task-header {
@@ -78,12 +81,12 @@
         }
 
         .add-task-header:hover {
-            background-color: #e9ecef;
+            background-color: #2a2a2a;
         }
 
         .add-task-header h2 {
             margin: 0;
-            color: #495057;
+            color: #d4d4d4;
         }
 
         .toggle-icon {
@@ -127,7 +130,7 @@
             display: block;
             margin-bottom: 4px;
             font-weight: bold;
-            color: #495057;
+            color: #d4d4d4;
             font-size: 11px;
         }
 
@@ -136,33 +139,37 @@
         .form-group textarea {
             width: 100%;
             padding: 8px;
-            border: 1px solid #dee2e6;
+            background: #1e1e1e;
+            color: #d4d4d4;
+            border: 1px solid #3c3c3c;
             border-radius: 4px;
             font-size: 12px;
-            transition: border-color 0.3s;
+            transition: border-color 0.3s, background-color 0.3s;
         }
 
         .form-group input:focus,
         .form-group select:focus,
         .form-group textarea:focus {
             outline: none;
-            border-color: #667eea;
+            border-color: #569cd6;
+            background: #252526;
         }
 
         .btn {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
+            background: #569cd6;
+            color: #1e1e1e;
             padding: 8px 20px;
             border: none;
             border-radius: 6px;
             cursor: pointer;
             font-size: 12px;
             font-weight: bold;
-            transition: transform 0.2s;
+            transition: transform 0.2s, background-color 0.2s;
         }
 
         .btn:hover {
             transform: translateY(-2px);
+            background: #6cb5ec;
         }
 
         .tasks-container {
@@ -176,8 +183,8 @@
         }
 
         .task-card {
-            background: white;
-            border: 1px solid #dee2e6;
+            background: #252526;
+            border: 1px solid #3c3c3c;
             border-radius: 6px;
             padding: 12px;
             transition: all 0.3s;
@@ -186,7 +193,7 @@
         }
 
         .task-card:hover {
-            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
             transform: translateY(-2px);
         }
 
@@ -200,7 +207,7 @@
         .task-title {
             font-size: 1em;
             font-weight: bold;
-            color: #495057;
+            color: #d4d4d4;
             margin-bottom: 4px;
         }
 
@@ -238,7 +245,7 @@
         .eisenhower-not-urgent-not-important { background: #f5f5f5; color: #666; border: 2px solid #999; }
 
         .task-description {
-            color: #6c757d;
+            color: #c5c5c5;
             margin-bottom: 12px;
             line-height: 1.3;
             font-size: 11px;
@@ -249,7 +256,7 @@
             gap: 12px;
             margin-bottom: 12px;
             font-size: 0.8em;
-            color: #6c757d;
+            color: #c5c5c5;
         }
 
         .task-actions {
@@ -278,7 +285,8 @@
         }
 
         .kanban-column {
-            background: #f8f9fa;
+            background: #2d2d30;
+            border: 1px solid #3c3c3c;
             border-radius: 6px;
             padding: 12px;
             min-height: 350px;
@@ -291,9 +299,11 @@
             margin-bottom: 12px;
             padding: 6px;
             border-radius: 4px;
-            color: #333;
+            color: #d4d4d4;
             font-weight: bold;
             font-size: 12px;
+            background: #1e1e1e;
+            border: 1px solid #3c3c3c;
         }
 
         .column-new { background: #e3f2fd; }
@@ -317,6 +327,8 @@
             border-radius: 8px;
             padding: 15px;
             min-height: 200px;
+            background: #2d2d30;
+            border: 1px solid #3c3c3c;
         }
 
         .quadrant-urgent-important { background: #ffebee; border: 2px solid #d32f2e; }
@@ -329,7 +341,7 @@
             font-weight: bold;
             margin-bottom: 12px;
             text-align: center;
-            color: #333;
+            color: #d4d4d4;
         }
 
         @media (max-width: 768px) {
@@ -456,105 +468,29 @@
         <div class="tasks-container">
             {% if current_mode == 'kanban' %}
                 <div class="kanban-columns">
-                    <div class="kanban-column column-new">
-                        <h3 class="column-new">🆕 Новая</h3>
+                    {% for status in cfg.statuses_order %}
+                    <div class="kanban-column">
+                        <h3>{{ cfg.statuses_labels[status] if cfg.statuses_labels and status in cfg.statuses_labels else status }}</h3>
                         {% for task in tasks %}
-                            {% if task[4] == 'new' %}
+                            {% if task[4] == status %}
                                 {% include 'task_card.html' %}
                             {% endif %}
                         {% endfor %}
                     </div>
-                    <div class="kanban-column column-think">
-                        <h3 class="column-think">🤔 На подумать</h3>
-                        {% for task in tasks %}
-                            {% if task[4] == 'think' %}
-                                {% include 'task_card.html' %}
-                            {% endif %}
-                        {% endfor %}
-                    </div>
-                    <div class="kanban-column column-later">
-                        <h3 class="column-later">⏰ На потом</h3>
-                        {% for task in tasks %}
-                            {% if task[4] == 'later' %}
-                                {% include 'task_card.html' %}
-                            {% endif %}
-                        {% endfor %}
-                    </div>
-                    <div class="kanban-column column-waiting">
-                        <h3 class="column-waiting">⏳ Ждем кого-то</h3>
-                        {% for task in tasks %}
-                            {% if task[4] == 'waiting' %}
-                                {% include 'task_card.html' %}
-                            {% endif %}
-                        {% endfor %}
-                    </div>
-                    <div class="kanban-column column-working">
-                        <h3 class="column-working">⚡ В работе</h3>
-                        {% for task in tasks %}
-                            {% if task[4] == 'working' %}
-                                {% include 'task_card.html' %}
-                            {% endif %}
-                        {% endfor %}
-                    </div>
-                    <div class="kanban-column column-tracking">
-                        <h3 class="column-tracking">👀 Отслеживаем</h3>
-                        {% for task in tasks %}
-                            {% if task[4] == 'tracking' %}
-                                {% include 'task_card.html' %}
-                            {% endif %}
-                        {% endfor %}
-                    </div>
-                    <div class="kanban-column column-done">
-                        <h3 class="column-done">✅ Готово</h3>
-                        {% for task in tasks %}
-                            {% if task[4] == 'done' %}
-                                {% include 'task_card.html' %}
-                            {% endif %}
-                        {% endfor %}
-                    </div>
-                    <div class="kanban-column column-cancelled">
-                        <h3 class="column-cancelled">❌ Отменено</h3>
-                        {% for task in tasks %}
-                            {% if task[4] == 'cancelled' %}
-                                {% include 'task_card.html' %}
-                            {% endif %}
-                        {% endfor %}
-                    </div>
+                    {% endfor %}
                 </div>
             {% else %}
                 <div class="eisenhower-grid">
-                    <div class="eisenhower-quadrant quadrant-urgent-important">
-                        <div class="quadrant-title">🔥 Важные и срочные</div>
+                    {% for pr in cfg.eisenhower_order %}
+                    <div class="eisenhower-quadrant">
+                        <div class="quadrant-title">{{ cfg.eisenhower_labels[pr] if cfg.eisenhower_labels and pr in cfg.eisenhower_labels else pr }}</div>
                         {% for task in tasks %}
-                            {% if task[6] == 'urgent_important' %}
+                            {% if task[6] == pr %}
                                 {% include 'task_card.html' %}
                             {% endif %}
                         {% endfor %}
                     </div>
-                    <div class="eisenhower-quadrant quadrant-urgent-not-important">
-                        <div class="quadrant-title">⚡ Срочные не важные</div>
-                        {% for task in tasks %}
-                            {% if task[6] == 'urgent_not_important' %}
-                                {% include 'task_card.html' %}
-                            {% endif %}
-                        {% endfor %}
-                    </div>
-                    <div class="eisenhower-quadrant quadrant-not-urgent-important">
-                        <div class="quadrant-title">⭐ Важные не срочные</div>
-                        {% for task in tasks %}
-                            {% if task[6] == 'not_urgent_important' %}
-                                {% include 'task_card.html' %}
-                            {% endif %}
-                        {% endfor %}
-                    </div>
-                    <div class="eisenhower-quadrant quadrant-not-urgent-not-important">
-                        <div class="quadrant-title">📋 Не важные не срочные</div>
-                        {% for task in tasks %}
-                            {% if task[6] == 'not_urgent_not_important' %}
-                                {% include 'task_card.html' %}
-                            {% endif %}
-                        {% endfor %}
-                    </div>
+                    {% endfor %}
                 </div>
             {% endif %}
         </div>
