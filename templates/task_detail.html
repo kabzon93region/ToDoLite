@@ -220,10 +220,11 @@
         }
 
         .form-section {
-            background: #f8f9fa;
+            background: #2d2d30;
             padding: 20px;
             border-radius: 10px;
             margin-bottom: 30px;
+            border: 1px solid #3c3c3c;
         }
 
         .form-section h3 {
@@ -265,11 +266,12 @@
         }
 
         .comment {
-            background: #f8f9fa;
+            background: #2d2d30;
             padding: 15px;
             border-radius: 8px;
             margin-bottom: 15px;
-            border-left: 4px solid #667eea;
+            border-left: 4px solid #569cd6;
+            border: 1px solid #3c3c3c;
         }
 
         .comment-header {
@@ -295,11 +297,11 @@
 
         .thread-link {
             display: block;
-            color: #667eea;
+            color: #6cb5ec;
             text-decoration: none;
             margin-bottom: 5px;
             padding: 5px 0;
-            border-bottom: 1px solid #e9ecef;
+            border-bottom: 1px solid #3c3c3c;
         }
 
         .thread-link:hover {
@@ -418,7 +420,7 @@
                     <h3>Редактировать задачу</h3>
                     <span id="editToggleIcon" class="edit-toggle-icon">▼</span>
                 </div>
-                <form id="editForm" method="POST" action="/update_task/{{ task[0] }}" style="display: none;">
+                <form id="editForm" method="POST" action="/update_task/{{ task[0] }}" style="display: block;">
                     <div class="form-group">
                         <label for="title">Название задачи *</label>
                         <input type="text" id="title" name="title" value="{{ task[1] }}" required>
