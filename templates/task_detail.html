@@ -406,17 +406,14 @@
                         <label for="title">Название задачи *</label>
                         <input type="text" id="title" name="title" value="{{ task[1] }}" required>
                     </div>
-                    <div class="form-group">
-                        <label for="short_description">Краткое описание</label>
-                        <input type="text" id="short_description" name="short_description" value="{{ task[2] or '' }}">
-                    </div>
-                    <div class="form-group">
-                        <label for="full_description">Подробное описание</label>
-                        <textarea id="full_description" name="full_description" rows="3">{{ task[3] or '' }}</textarea>
-                    </div>
-                    <div class="form-group">
-                        <label for="status">Статус</label>
-                        <select id="status" name="status">
+                    <div class="form-grid" style="grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px;">
+                        <div class="form-group">
+                            <label for="short_description">Краткое описание</label>
+                            <input type="text" id="short_description" name="short_description" value="{{ task[2] or '' }}">
+                        </div>
+                        <div class="form-group">
+                            <label for="status">Статус</label>
+                            <select id="status" name="status">
                             <option value="new" {{ 'selected' if task[4] == 'new' else '' }}>Новая</option>
                             <option value="think" {{ 'selected' if task[4] == 'think' else '' }}>На подумать</option>
                             <option value="later" {{ 'selected' if task[4] == 'later' else '' }}>На потом</option>
@@ -425,36 +422,41 @@
                             <option value="tracking" {{ 'selected' if task[4] == 'tracking' else '' }}>Отслеживаем</option>
                             <option value="done" {{ 'selected' if task[4] == 'done' else '' }}>Готово</option>
                             <option value="cancelled" {{ 'selected' if task[4] == 'cancelled' else '' }}>Отменено</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label for="priority">Приоритет</label>
-                        <select id="priority" name="priority">
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="priority">Приоритет</label>
+                            <select id="priority" name="priority">
                             <option value="low" {{ 'selected' if task[5] == 'low' else '' }}>Низкий</option>
                             <option value="medium" {{ 'selected' if task[5] == 'medium' else '' }}>Средний</option>
                             <option value="high" {{ 'selected' if task[5] == 'high' else '' }}>Высокий</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label for="eisenhower_priority">Приоритет Эйзенхауэра</label>
-                        <select id="eisenhower_priority" name="eisenhower_priority">
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="eisenhower_priority">Приоритет Эйзенхауэра</label>
+                            <select id="eisenhower_priority" name="eisenhower_priority">
                             <option value="urgent_important" {{ 'selected' if task[6] == 'urgent_important' else '' }}>🔥 Важные и срочные</option>
                             <option value="urgent_not_important" {{ 'selected' if task[6] == 'urgent_not_important' else '' }}>⚡ Срочные не важные</option>
                             <option value="not_urgent_important" {{ 'selected' if task[6] == 'not_urgent_important' else '' }}>⭐ Важные не срочные</option>
                             <option value="not_urgent_not_important" {{ 'selected' if task[6] == 'not_urgent_not_important' else '' }}>📋 Не важные не срочные</option>
-                        </select>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="assigned_to">Ответственный</label>
+                            <input type="text" id="assigned_to" name="assigned_to" value="{{ task[7] or '' }}">
+                        </div>
+                        <div class="form-group">
+                            <label for="scheduled_date">Дата отложения</label>
+                            <input type="date" id="scheduled_date" name="scheduled_date" value="{{ task[9] or '' }}">
+                        </div>
+                        <div class="form-group">
+                            <label for="due_date">Срок выполнения</label>
+                            <input type="date" id="due_date" name="due_date" value="{{ task[10] or '' }}">
+                        </div>
                     </div>
                     <div class="form-group">
-                        <label for="assigned_to">Ответственный</label>
-                        <input type="text" id="assigned_to" name="assigned_to" value="{{ task[7] or '' }}">
-                    </div>
-                    <div class="form-group">
-                        <label for="scheduled_date">Дата отложения</label>
-                        <input type="date" id="scheduled_date" name="scheduled_date" value="{{ task[9] or '' }}">
-                    </div>
-                    <div class="form-group">
-                        <label for="due_date">Срок выполнения</label>
-                        <input type="date" id="due_date" name="due_date" value="{{ task[10] or '' }}">
+                        <label for="full_description">Подробное описание</label>
+                        <textarea id="full_description" name="full_description" rows="3">{{ task[3] or '' }}</textarea>
                     </div>
                     <div class="form-group">
                         <label for="related_threads">Связанные треды (ссылки через запятую)</label>

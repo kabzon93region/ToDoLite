@@ -327,7 +327,8 @@ def update_task_route(task_id):
 def add_comment_route(task_id):
     comment = request.form['comment']
     add_comment(task_id, comment)
-    return redirect(url_for('view_task', task_id=task_id))
+    # После добавления комментария раскрываем блок редактирования
+    return redirect(url_for('view_task', task_id=task_id, open_edit=1))
 
 @app.route('/delete_task/<int:task_id>')
 def delete_task_route(task_id):
