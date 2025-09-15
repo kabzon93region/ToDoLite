@@ -1,5 +1,6 @@
 from flask import Flask, render_template, request, redirect, url_for, jsonify
 import json
+import re
 import sqlite3
 import os
 import signal
@@ -110,11 +111,28 @@ def get_tasks_by_mode(mode):
     return tasks
 
 
+def _clean_json(text: str) -> str:
+    # Remove BOM
+    text = text.lstrip('\ufeff')
+    # Remove // comments
+    text = re.sub(r"(^|\s)//.*$", "", text, flags=re.MULTILINE)
+    # Remove /* */ comments
+    text = re.sub(r"/\*.*?\*/", "", text, flags=re.DOTALL)
+    # Remove trailing commas before } or ]
+    text = re.sub(r",\s*(\}|\])", r"\1", text)
+    return text
+
 def load_config():
     """Загружает конфигурацию из config.json"""
     try:
         with open('config.json', 'r', encoding='utf-8') as f:
-            return json.load(f)
+            raw = f.read()
+            try:
+                return json.loads(raw)
+            except Exception:
+                # Пытаемся почистить и распарсить с мягкой толерантностью к комментам/висячим запятым
+                cleaned = _clean_json(raw)
+                return json.loads(cleaned)
     except Exception:
         return {
             "statuses_order": ["new","think","later","waiting","working","tracking","done","cancelled"],
