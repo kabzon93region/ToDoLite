@@ -1,21 +1,21 @@
-{
+﻿{
   "statuses_order": [
     "new",
-    "think",
     "later",
-    "waiting",
-    "working",
     "tracking",
+    "working",
+    "waiting",
+    "think",
     "done",
     "cancelled"
   ],
   "statuses_labels": {
     "new": "🆕 Новая",
-    "think": "🤔 На подумать",
     "later": "⏰ На потом",
-    "waiting": "⏳ Ждем кого-то",
-    "working": "⚡ В работе",
     "tracking": "👀 Отслеживаем",
+    "working": "⚡ В работе",
+    "waiting": "⏳ Ждем кого-то",
+    "think": "🤔 На подумать",
     "done": "✅ Готово",
     "cancelled": "❌ Отменено"
   },
