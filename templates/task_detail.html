@@ -217,6 +217,19 @@
 
         .btn-success {
             background: #28a745;
+            border: 1px solid #28a745;
+        }
+        
+        .btn-success:hover {
+            background: #218838;
+            border-color: #1e7e34;
+        }
+        
+        .task-actions {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-start;
+            margin-top: 20px;
         }
 
         .form-section {
@@ -229,7 +242,7 @@
 
         .form-section h3 {
             margin-bottom: 15px;
-            color: #495057;
+            color: #d4d4d4;
         }
 
         .form-group {
@@ -240,7 +253,7 @@
             display: block;
             margin-bottom: 5px;
             font-weight: bold;
-            color: #495057;
+            color: #d4d4d4;
         }
 
         .form-group input,
@@ -248,8 +261,10 @@
         .form-group textarea {
             width: 100%;
             padding: 12px;
-            border: 2px solid #dee2e6;
+            border: 2px solid #555;
             border-radius: 8px;
+            background: #1e1e1e;
+            color: #d4d4d4;
             font-size: 16px;
             transition: border-color 0.3s;
         }
@@ -258,7 +273,8 @@
         .form-group select:focus,
         .form-group textarea:focus {
             outline: none;
-            border-color: #667eea;
+            border-color: #007bff;
+            box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
         }
 
         .comments-section {
@@ -294,6 +310,20 @@
             padding: 10px;
             border-radius: 6px;
             white-space: pre-wrap;
+        }
+        
+        /* Дополнительные стили для полей комментариев */
+        .form-section textarea,
+        .form-section input {
+            background: #1e1e1e !important;
+            color: #d4d4d4 !important;
+            border: 2px solid #555 !important;
+        }
+        
+        .form-section textarea:focus,
+        .form-section input:focus {
+            border-color: #007bff !important;
+            box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25) !important;
         }
 
         .related-threads {
@@ -415,79 +445,16 @@
                         {% endfor %}
                     </div>
                     {% endif %}
+
+                    {% if task[14] %}
+                    <div class="info-item">
+                        <div class="info-label">Теги</div>
+                        <div class="info-value">{{ task[14] }}</div>
+                    </div>
+                    {% endif %}
                 </div>
 
                 <!-- Кнопка удаления перенесена вниз страницы -->
-            </div>
-
-            <div class="form-section">
-                <div class="edit-task-header" onclick="toggleEdit()">
-                    <h3>Редактировать задачу</h3>
-                    <span id="editToggleIcon" class="edit-toggle-icon">▼</span>
-                </div>
-                <form id="editForm" method="POST" action="/update_task/{{ task[0] }}" style="display: block;">
-                    <div class="form-group">
-                        <label for="title">Название задачи *</label>
-                        <input type="text" id="title" name="title" value="{{ task[1] }}" required>
-                    </div>
-                    <div class="form-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px;">
-                        <div class="form-group">
-                            <label for="short_description">Краткое описание</label>
-                            <input type="text" id="short_description" name="short_description" value="{{ task[2] or '' }}">
-                        </div>
-                        <div class="form-group">
-                            <label for="status">Статус</label>
-                            <select id="status" name="status">
-                            <option value="new" {{ 'selected' if task[4] == 'new' else '' }}>Новая</option>
-                            <option value="think" {{ 'selected' if task[4] == 'think' else '' }}>На подумать</option>
-                            <option value="later" {{ 'selected' if task[4] == 'later' else '' }}>На потом</option>
-                            <option value="waiting" {{ 'selected' if task[4] == 'waiting' else '' }}>Ждем кого-то</option>
-                            <option value="working" {{ 'selected' if task[4] == 'working' else '' }}>В работе</option>
-                            <option value="tracking" {{ 'selected' if task[4] == 'tracking' else '' }}>Отслеживаем</option>
-                            <option value="done" {{ 'selected' if task[4] == 'done' else '' }}>Готово</option>
-                            <option value="cancelled" {{ 'selected' if task[4] == 'cancelled' else '' }}>Отменено</option>
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <label for="priority">Приоритет</label>
-                            <select id="priority" name="priority">
-                            <option value="low" {{ 'selected' if task[5] == 'low' else '' }}>Низкий</option>
-                            <option value="medium" {{ 'selected' if task[5] == 'medium' else '' }}>Средний</option>
-                            <option value="high" {{ 'selected' if task[5] == 'high' else '' }}>Высокий</option>
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <label for="eisenhower_priority">Приоритет Эйзенхауэра</label>
-                            <select id="eisenhower_priority" name="eisenhower_priority">
-                            <option value="urgent_important" {{ 'selected' if task[6] == 'urgent_important' else '' }}>🔥 Важные и срочные</option>
-                            <option value="urgent_not_important" {{ 'selected' if task[6] == 'urgent_not_important' else '' }}>⚡ Срочные не важные</option>
-                            <option value="not_urgent_important" {{ 'selected' if task[6] == 'not_urgent_important' else '' }}>⭐ Важные не срочные</option>
-                            <option value="not_urgent_not_important" {{ 'selected' if task[6] == 'not_urgent_not_important' else '' }}>📋 Не важные не срочные</option>
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <label for="assigned_to">Ответственный</label>
-                            <input type="text" id="assigned_to" name="assigned_to" value="{{ task[7] or '' }}">
-                        </div>
-                        <div class="form-group">
-                            <label for="scheduled_date">Дата отложения</label>
-                            <input type="date" id="scheduled_date" name="scheduled_date" value="{{ task[9] or '' }}">
-                        </div>
-                        <div class="form-group">
-                            <label for="due_date">Срок выполнения</label>
-                            <input type="date" id="due_date" name="due_date" value="{{ task[10] or '' }}">
-                        </div>
-                    </div>
-                    <div class="form-group">
-                        <label for="full_description">Подробное описание</label>
-                        <textarea id="full_description" name="full_description" rows="3">{{ task[3] or '' }}</textarea>
-                    </div>
-                    <div class="form-group">
-                        <label for="related_threads">Связанные треды (ссылки через запятую)</label>
-                        <input type="text" id="related_threads" name="related_threads" value="{{ task[8] or '' }}" placeholder="https://example.com/thread1, https://example.com/thread2">
-                    </div>
-                    <button type="submit" class="btn">Сохранить изменения</button>
-                </form>
             </div>
 
             <div class="comments-section">
@@ -517,7 +484,79 @@
                     <p style="color: #6c757d; text-align: center; padding: 20px;">Пока нет комментариев</p>
                 {% endif %}
             </div>
+
+            <div class="form-section">
+                <div class="edit-task-header" onclick="toggleEdit()">
+                    <h3>Редактировать задачу</h3>
+                    <span id="editToggleIcon" class="edit-toggle-icon">▼</span>
+                </div>
+                <form id="editForm" method="POST" action="/update_task/{{ task[0] }}" style="display: none;">
+                    <div class="form-group">
+                        <label for="title">Название задачи *</label>
+                        <input type="text" id="title" name="title" value="{{ task[1] }}" required>
+                    </div>
+                    <div class="form-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px;">
+                        <div class="form-group">
+                        <label for="short_description">Краткое описание *</label>
+                        <input type="text" id="short_description" name="short_description" value="{{ task[2] or '' }}" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="status">Статус *</label>
+                            <select id="status" name="status" required>
+                            {% for status in cfg.statuses_order %}
+                                <option value="{{ status }}" {{ 'selected' if task[4] == status else '' }}>{{ cfg.statuses_labels[status] if cfg.statuses_labels and status in cfg.statuses_labels else status }}</option>
+                            {% endfor %}
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="priority">Приоритет *</label>
+                            <select id="priority" name="priority" required>
+                            <option value="low" {{ 'selected' if task[5] == 'low' else '' }}>Низкий</option>
+                            <option value="medium" {{ 'selected' if task[5] == 'medium' else '' }}>Средний</option>
+                            <option value="high" {{ 'selected' if task[5] == 'high' else '' }}>Высокий</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="eisenhower_priority">Приоритет Эйзенхауэра *</label>
+                            <select id="eisenhower_priority" name="eisenhower_priority" required>
+                            <option value="urgent_important" {{ 'selected' if task[6] == 'urgent_important' else '' }}>🔥 Важные и срочные</option>
+                            <option value="urgent_not_important" {{ 'selected' if task[6] == 'urgent_not_important' else '' }}>⚡ Срочные не важные</option>
+                            <option value="not_urgent_important" {{ 'selected' if task[6] == 'not_urgent_important' else '' }}>⭐ Важные не срочные</option>
+                            <option value="not_urgent_not_important" {{ 'selected' if task[6] == 'not_urgent_not_important' else '' }}>📋 Не важные не срочные</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="assigned_to">Ответственный</label>
+                            <input type="text" id="assigned_to" name="assigned_to" value="{{ task[7] or '' }}">
+                        </div>
+                        <div class="form-group">
+                            <label for="scheduled_date">Дата отложения</label>
+                            <input type="date" id="scheduled_date" name="scheduled_date" value="{{ task[9] or '' }}">
+                        </div>
+                        <div class="form-group">
+                            <label for="due_date">Срок выполнения</label>
+                            <input type="date" id="due_date" name="due_date" value="{{ task[10] or '' }}">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="full_description">Подробное описание</label>
+                        <textarea id="full_description" name="full_description" rows="3">{{ task[3] or '' }}</textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="related_threads">Связанные треды (ссылки через запятую)</label>
+                        <input type="text" id="related_threads" name="related_threads" value="{{ task[8] or '' }}" placeholder="https://example.com/thread1, https://example.com/thread2">
+                    </div>
+                    <div class="form-group">
+                        <label for="tags">Теги (через пробел, с #)</label>
+                        <input type="text" id="tags" name="tags" value="{{ task[14] or '' }}" placeholder="#backend #urgent">
+                    </div>
+                    <button type="submit" class="btn">Сохранить изменения</button>
+                </form>
+            </div>
+
             <div class="task-actions">
+                <a href="/mark_done/{{ task[0] }}" class="btn btn-success" 
+                   onclick="return confirm('Отметить задачу как выполненную?')">Готово</a>
                 <a href="/delete_task/{{ task[0] }}" class="btn btn-danger" 
                    onclick="return confirm('Вы уверены, что хотите удалить эту задачу?')">Удалить задачу</a>
             </div>

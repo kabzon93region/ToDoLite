@@ -46,6 +46,7 @@ def init_db():
             ('related_threads', 'TEXT'),
             ('scheduled_date', 'DATE'),
             ('due_date', 'DATE'),
+            ('tags', 'TEXT'),
             ('completed_at', 'TIMESTAMP')
         ]
         
@@ -70,6 +71,7 @@ def init_db():
                       related_threads TEXT,
                       scheduled_date DATE,
                       due_date DATE,
+                      tags TEXT,
                       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                       updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                       completed_at TIMESTAMP)''')
@@ -99,12 +101,74 @@ def get_tasks_by_mode(mode):
     conn = sqlite3.connect('tasks.db')
     c = conn.cursor()
     
+    # В обоих режимах сортируем по приоритету: high -> medium -> low, затем по сроку
     if mode == 'eisenhower':
-        c.execute("SELECT * FROM tasks ORDER BY eisenhower_priority, due_date ASC")
+        c.execute("""
+            SELECT 
+                id,
+                title,
+                short_description,
+                full_description,
+                status,
+                priority,
+                eisenhower_priority,
+                assigned_to,
+                related_threads,
+                scheduled_date,
+                due_date,
+                created_at,
+                updated_at,
+                completed_at,
+                tags
+            FROM tasks
+            ORDER BY 
+                CASE priority WHEN 'high' THEN 1 WHEN 'medium' THEN 2 ELSE 3 END,
+                COALESCE(due_date, '') ASC
+        """)
     elif mode == 'kanban':
-        c.execute("SELECT * FROM tasks ORDER BY status, due_date ASC")
+        c.execute("""
+            SELECT 
+                id,
+                title,
+                short_description,
+                full_description,
+                status,
+                priority,
+                eisenhower_priority,
+                assigned_to,
+                related_threads,
+                scheduled_date,
+                due_date,
+                created_at,
+                updated_at,
+                completed_at,
+                tags
+            FROM tasks
+            ORDER BY 
+                CASE priority WHEN 'high' THEN 1 WHEN 'medium' THEN 2 ELSE 3 END,
+                COALESCE(due_date, '') ASC
+        """)
     else:
-        c.execute("SELECT * FROM tasks ORDER BY created_at DESC")
+        c.execute("""
+            SELECT 
+                id,
+                title,
+                short_description,
+                full_description,
+                status,
+                priority,
+                eisenhower_priority,
+                assigned_to,
+                related_threads,
+                scheduled_date,
+                due_date,
+                created_at,
+                updated_at,
+                completed_at,
+                tags
+            FROM tasks 
+            ORDER BY created_at DESC
+        """)
     
     tasks = c.fetchall()
     conn.close()
@@ -201,13 +265,15 @@ def get_task_with_comments(task_id):
             due_date,
             created_at,
             updated_at,
-            completed_at
+            completed_at,
+            tags
         FROM tasks WHERE id = ?
     """, (task_id,))
     task = c.fetchone()
     
     # Получаем комментарии
-    c.execute("SELECT * FROM task_comments WHERE task_id = ? ORDER BY created_at ASC", (task_id,))
+    # Новые комментарии первыми
+    c.execute("SELECT * FROM task_comments WHERE task_id = ? ORDER BY created_at DESC", (task_id,))
     comments = c.fetchall()
     
     conn.close()
@@ -215,20 +281,20 @@ def get_task_with_comments(task_id):
 
 # Добавить новую задачу
 def add_task(title, short_description, full_description, status, priority, eisenhower_priority, 
-             assigned_to, related_threads, scheduled_date, due_date):
+             assigned_to, related_threads, scheduled_date, due_date, tags):
     conn = sqlite3.connect('tasks.db')
     c = conn.cursor()
     c.execute("""INSERT INTO tasks (title, short_description, full_description, status, priority, 
-                 eisenhower_priority, assigned_to, related_threads, scheduled_date, due_date) 
-                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+                 eisenhower_priority, assigned_to, related_threads, scheduled_date, due_date, tags) 
+                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
               (title, short_description, full_description, status, priority, eisenhower_priority,
-               assigned_to, related_threads, scheduled_date, due_date))
+               assigned_to, related_threads, scheduled_date, due_date, tags))
     conn.commit()
     conn.close()
 
 # Обновить задачу
 def update_task(task_id, title, short_description, full_description, status, priority, 
-                eisenhower_priority, assigned_to, related_threads, scheduled_date, due_date):
+                eisenhower_priority, assigned_to, related_threads, scheduled_date, due_date, tags):
     conn = sqlite3.connect('tasks.db')
     c = conn.cursor()
     # Если статус переводится в 'done', проставляем completed_at только один раз
@@ -242,6 +308,7 @@ def update_task(task_id, title, short_description, full_description, status, pri
             eisenhower_priority=?, 
             assigned_to=?, 
             related_threads=?, 
+            tags=?,
             scheduled_date=?, 
             due_date=?, 
             updated_at=CURRENT_TIMESTAMP,
@@ -253,7 +320,7 @@ def update_task(task_id, title, short_description, full_description, status, pri
     """,
         (
             title, short_description, full_description, status, priority, eisenhower_priority,
-            assigned_to, related_threads, scheduled_date, due_date, status, task_id
+            assigned_to, related_threads, tags, scheduled_date, due_date, status, task_id
         )
     )
     conn.commit()
@@ -287,7 +354,8 @@ def view_task(task_id):
     task, comments = get_task_with_comments(task_id)
     if not task:
         return "Задача не найдена", 404
-    return render_template('task_detail.html', task=task, comments=comments)
+    cfg = load_config()
+    return render_template('task_detail.html', task=task, comments=comments, cfg=cfg)
 
 @app.route('/add_task', methods=['POST'])
 def add_task_route():
@@ -299,11 +367,12 @@ def add_task_route():
     eisenhower_priority = request.form.get('eisenhower_priority', 'not_urgent_not_important')
     assigned_to = request.form.get('assigned_to', '')
     related_threads = request.form.get('related_threads', '')
+    tags = request.form.get('tags', '')
     scheduled_date = request.form.get('scheduled_date', '')
     due_date = request.form.get('due_date', '')
     
     add_task(title, short_description, full_description, status, priority, eisenhower_priority,
-             assigned_to, related_threads, scheduled_date, due_date)
+             assigned_to, related_threads, scheduled_date, due_date, tags)
     return redirect(url_for('index'))
 
 @app.route('/update_task/<int:task_id>', methods=['POST'])
@@ -316,11 +385,12 @@ def update_task_route(task_id):
     eisenhower_priority = request.form.get('eisenhower_priority', 'not_urgent_not_important')
     assigned_to = request.form.get('assigned_to', '')
     related_threads = request.form.get('related_threads', '')
+    tags = request.form.get('tags', '')
     scheduled_date = request.form.get('scheduled_date', '')
     due_date = request.form.get('due_date', '')
     
     update_task(task_id, title, short_description, full_description, status, priority,
-                eisenhower_priority, assigned_to, related_threads, scheduled_date, due_date)
+                eisenhower_priority, assigned_to, related_threads, scheduled_date, due_date, tags)
     return redirect(url_for('view_task', task_id=task_id))
 
 @app.route('/add_comment/<int:task_id>', methods=['POST'])
@@ -334,6 +404,95 @@ def add_comment_route(task_id):
 def delete_task_route(task_id):
     delete_task(task_id)
     return redirect(url_for('index'))
+
+@app.route('/mark_done/<int:task_id>')
+def mark_done_route(task_id):
+    """Отметить задачу как выполненную"""
+    conn = sqlite3.connect('tasks.db')
+    c = conn.cursor()
+    
+    c.execute("""
+        UPDATE tasks SET 
+            status = 'done',
+            completed_at = CURRENT_TIMESTAMP,
+            updated_at = CURRENT_TIMESTAMP
+        WHERE id = ?
+    """, (task_id,))
+    
+    conn.commit()
+    conn.close()
+    
+    return redirect(url_for('view_task', task_id=task_id))
+
+@app.route('/update_task_status', methods=['POST'])
+def update_task_status():
+    """API endpoint для обновления статуса задачи через drag&drop"""
+    data = request.get_json()
+    task_id = data.get('task_id')
+    new_status = data.get('status')
+    
+    if not task_id or not new_status:
+        return {'success': False, 'error': 'Missing task_id or status'}, 400
+    
+    conn = sqlite3.connect('tasks.db')
+    c = conn.cursor()
+    
+    # Обновляем только статус задачи
+    c.execute("""
+        UPDATE tasks SET 
+            status = ?, 
+            updated_at = CURRENT_TIMESTAMP,
+            completed_at = CASE 
+                WHEN ? = 'done' AND (completed_at IS NULL OR completed_at = '') THEN CURRENT_TIMESTAMP 
+                ELSE completed_at 
+            END
+        WHERE id = ?
+    """, (new_status, new_status, task_id))
+    
+    conn.commit()
+    conn.close()
+    
+    return {'success': True}
+
+@app.route('/api/tags')
+def get_tags():
+    """API для получения всех тегов с количеством задач"""
+    conn = sqlite3.connect('tasks.db')
+    c = conn.cursor()
+    
+    # Получаем все теги и считаем количество задач для каждого
+    c.execute("""
+        SELECT tags, COUNT(*) as count 
+        FROM tasks 
+        WHERE tags IS NOT NULL AND tags != '' 
+        GROUP BY tags
+        ORDER BY count DESC, tags ASC
+    """)
+    
+    tags_data = c.fetchall()
+    conn.close()
+    
+    # Парсим теги и создаем список уникальных тегов с количеством
+    tag_counts = {}
+    for tags_string, count in tags_data:
+        if tags_string:
+            # Разбиваем теги по пробелам и очищаем от # если нужно
+            tags = [tag.strip() for tag in tags_string.split() if tag.strip()]
+            for tag in tags:
+                # Убираем # из начала если есть
+                clean_tag = tag[1:] if tag.startswith('#') else tag
+                if clean_tag not in tag_counts:
+                    tag_counts[clean_tag] = 0
+                tag_counts[clean_tag] += count
+    
+    # Сортируем по количеству, затем по алфавиту
+    sorted_tags = sorted(tag_counts.items(), key=lambda x: (-x[1], x[0]))
+    
+    return {'tags': [{'tag': tag, 'count': count} for tag, count in sorted_tags]}
+
+@app.route('/test_api')
+def test_api_page():
+    return app.send_static_file('test_api.html')
 
 if __name__ == '__main__':
     init_db()

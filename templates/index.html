@@ -34,13 +34,81 @@
             background: #252526;
             color: #d4d4d4;
             padding: 8px 15px;
-            text-align: center;
             border: 1px solid #3c3c3c;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .filters {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+        
+        .filter-select, .filter-input {
+            background: #2d2d30;
+            border: 1px solid #3c3c3c;
+            color: #d4d4d4;
+            padding: 6px 10px;
+            border-radius: 4px;
+            font-size: 12px;
+        }
+        
+        .filter-select:focus, .filter-input:focus {
+            outline: none;
+            border-color: #007acc;
+        }
+        
+        .filter-input {
+            min-width: 150px;
+        }
+        
+        .filter-btn {
+            background: #007acc;
+            border: 1px solid #007acc;
+            color: #d4d4d4;
+            padding: 6px 12px;
+            border-radius: 4px;
+            font-size: 12px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        
+        .filter-btn:hover {
+            background: #005a9e;
+        }
+        
+        .selected-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+            margin-top: 5px;
+        }
+        
+        .tag-chip {
+            background: #3c3c3c;
+            color: #d4d4d4;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 11px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        
+        .tag-remove {
+            background: none;
+            border: none;
+            color: #ff6b6b;
+            cursor: pointer;
+            font-size: 14px;
+            padding: 0;
+            margin-left: 3px;
         }
 
         .mode-selector {
             display: flex;
-            justify-content: center;
             gap: 15px;
         }
 
@@ -190,6 +258,27 @@
             transition: all 0.3s;
             position: relative;
             margin-bottom: 8px;
+            cursor: move;
+        }
+        
+        .task-card.dragging {
+            opacity: 0.5;
+            transform: rotate(5deg);
+        }
+        
+        .task-card.drag-over {
+            border-color: #007acc;
+            box-shadow: 0 0 10px rgba(0, 122, 204, 0.5);
+        }
+        
+        .kanban-column.drag-over {
+            background: rgba(0, 122, 204, 0.1);
+            border: 2px dashed #007acc;
+        }
+        
+        .eisenhower-quadrant.drag-over {
+            background: rgba(0, 122, 204, 0.1);
+            border: 2px dashed #007acc;
         }
 
         .task-card:hover {
@@ -213,9 +302,23 @@
 
         .task-meta {
             display: flex;
-            gap: 8px;
-            flex-wrap: wrap;
+            justify-content: space-between;
+            align-items: center;
             margin-bottom: 8px;
+        }
+        
+        .btn-secondary {
+            background: #6c757d;
+            border: 1px solid #6c757d;
+            color: #d4d4d4;
+            padding: 2px 6px;
+            font-size: 10px;
+            line-height: 1.2;
+        }
+        
+        .btn-secondary:hover {
+            background: #5a6268;
+            border-color: #5a6268;
         }
 
         .task-badge {
@@ -263,6 +366,20 @@
             display: flex;
             gap: 8px;
             flex-wrap: wrap;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .task-tags {
+            font-size: 0.8em;
+            color: #6c757d;
+            background: #3c3c3c;
+            padding: 2px 6px;
+            border-radius: 4px;
+            max-width: 200px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
         }
 
         .btn-small {
@@ -391,6 +508,31 @@
                     ⚡ Матрица Эйзенхауэра
                 </button>
             </div>
+            <div class="filters">
+                <select id="statusFilter" class="filter-select">
+                    <option value="">Все статусы</option>
+                    {% for status in cfg.statuses_order %}
+                    <option value="{{ status }}">{{ cfg.statuses_labels[status] if cfg.statuses_labels and status in cfg.statuses_labels else status }}</option>
+                    {% endfor %}
+                </select>
+                <select id="priorityFilter" class="filter-select">
+                    <option value="">Все приоритеты</option>
+                    <option value="high">Высокий</option>
+                    <option value="medium">Средний</option>
+                    <option value="low">Низкий</option>
+                </select>
+                <select id="eisenhowerFilter" class="filter-select">
+                    <option value="">Все категории Эйзенхауэра</option>
+                    {% for pr in cfg.eisenhower_order %}
+                    <option value="{{ pr }}">{{ cfg.eisenhower_labels[pr] if cfg.eisenhower_labels and pr in cfg.eisenhower_labels else pr }}</option>
+                    {% endfor %}
+                </select>
+                <select id="tagsSelect" class="filter-select">
+                    <option value="">Выберите тег</option>
+                </select>
+                <button type="button" id="addTagBtn" class="filter-btn">+</button>
+                <div id="selectedTags" class="selected-tags"></div>
+            </div>
         </div>
 
         <div class="add-task-section">
@@ -406,12 +548,12 @@
                         <input type="text" id="title" name="title" required>
                     </div>
                     <div class="form-group">
-                        <label for="short_description">Краткое описание</label>
-                        <input type="text" id="short_description" name="short_description">
+                        <label for="short_description">Краткое описание *</label>
+                        <input type="text" id="short_description" name="short_description" required>
                     </div>
                     <div class="form-group">
-                        <label for="status">Статус</label>
-                        <select id="status" name="status">
+                        <label for="status">Статус *</label>
+                        <select id="status" name="status" required>
                             <option value="new">Новая</option>
                             <option value="think">На подумать</option>
                             <option value="later">На потом</option>
@@ -423,16 +565,16 @@
                         </select>
                     </div>
                     <div class="form-group">
-                        <label for="priority">Приоритет</label>
-                        <select id="priority" name="priority">
+                        <label for="priority">Приоритет *</label>
+                        <select id="priority" name="priority" required>
                             <option value="low">Низкий</option>
                             <option value="medium" selected>Средний</option>
                             <option value="high">Высокий</option>
                         </select>
                     </div>
                     <div class="form-group">
-                        <label for="eisenhower_priority">Приоритет Эйзенхауэра</label>
-                        <select id="eisenhower_priority" name="eisenhower_priority">
+                        <label for="eisenhower_priority">Приоритет Эйзенхауэра *</label>
+                        <select id="eisenhower_priority" name="eisenhower_priority" required>
                             <option value="urgent_important">🔥 Важные и срочные</option>
                             <option value="urgent_not_important">⚡ Срочные не важные</option>
                             <option value="not_urgent_important">⭐ Важные не срочные</option>
@@ -460,6 +602,10 @@
                     <label for="related_threads">Связанные треды (ссылки через запятую)</label>
                     <input type="text" id="related_threads" name="related_threads" placeholder="https://example.com/thread1, https://example.com/thread2">
                 </div>
+                <div class="form-group">
+                    <label for="tags">Теги (через пробел, с #)</label>
+                    <input type="text" id="tags" name="tags" placeholder="#backend #urgent">
+                </div>
                 <button type="submit" class="btn">Добавить задачу</button>
                 </form>
             </div>
@@ -469,7 +615,7 @@
             {% if current_mode == 'kanban' %}
                 <div class="kanban-columns">
                     {% for status in cfg.statuses_order %}
-                    <div class="kanban-column">
+                    <div class="kanban-column" data-status="{{ status }}">
                         <h3>{{ cfg.statuses_labels[status] if cfg.statuses_labels and status in cfg.statuses_labels else status }}</h3>
                         {% for task in tasks %}
                             {% if task[4] == status %}
@@ -482,7 +628,7 @@
             {% else %}
                 <div class="eisenhower-grid">
                     {% for pr in cfg.eisenhower_order %}
-                    <div class="eisenhower-quadrant">
+                    <div class="eisenhower-quadrant" data-eisenhower="{{ pr }}">
                         <div class="quadrant-title">{{ cfg.eisenhower_labels[pr] if cfg.eisenhower_labels and pr in cfg.eisenhower_labels else pr }}</div>
                         {% for task in tasks %}
                             {% if task[6] == pr %}
@@ -511,6 +657,301 @@
             } else {
                 form.style.display = 'none';
                 icon.classList.remove('rotated');
+            }
+        }
+
+        // Filtering and autocomplete functionality
+        let allTasks = [];
+        let availableTags = [];
+        let selectedTags = [];
+        
+        function loadAvailableTags() {
+            fetch('/api/tags')
+                .then(response => {
+                    console.log('Tags API response status:', response.status);
+                    return response.json();
+                })
+                .then(data => {
+                    console.log('Available tags loaded:', data);
+                    availableTags = data.tags || [];
+                })
+                .catch(error => {
+                    console.error('Error loading tags:', error);
+                    availableTags = [];
+                });
+        }
+        
+        function setupTagsFilter() {
+            const tagsSelect = document.getElementById('tagsSelect');
+            const addTagBtn = document.getElementById('addTagBtn');
+            const selectedTagsDiv = document.getElementById('selectedTags');
+            
+            if (!tagsSelect || !addTagBtn || !selectedTagsDiv) {
+                console.error('Tags filter elements not found');
+                return;
+            }
+            
+            // Populate tags select
+            function populateTagsSelect() {
+                tagsSelect.innerHTML = '<option value="">Выберите тег</option>';
+                availableTags.forEach(tag => {
+                    const option = document.createElement('option');
+                    option.value = tag.tag;
+                    option.textContent = `#${tag.tag} (${tag.count})`;
+                    tagsSelect.appendChild(option);
+                });
+            }
+            
+            // Add selected tag to filter
+            addTagBtn.addEventListener('click', function() {
+                const selectedTag = tagsSelect.value;
+                if (selectedTag && !selectedTags.includes(selectedTag)) {
+                    selectedTags.push(selectedTag);
+                    updateSelectedTagsDisplay();
+                    applyFilters();
+                }
+            });
+            
+            // Update selected tags display
+            function updateSelectedTagsDisplay() {
+                selectedTagsDiv.innerHTML = '';
+                selectedTags.forEach(tag => {
+                    const chip = document.createElement('div');
+                    chip.className = 'tag-chip';
+                    chip.innerHTML = `
+                        #${tag}
+                        <button class="tag-remove" onclick="removeTag('${tag}')">×</button>
+                    `;
+                    selectedTagsDiv.appendChild(chip);
+                });
+            }
+            
+            // Remove tag from filter
+            window.removeTag = function(tag) {
+                const index = selectedTags.indexOf(tag);
+                if (index > -1) {
+                    selectedTags.splice(index, 1);
+                    updateSelectedTagsDisplay();
+                    applyFilters();
+                }
+            };
+            
+            // Populate tags when available
+            if (availableTags.length > 0) {
+                populateTagsSelect();
+            } else {
+                // Wait for tags to load
+                const checkTags = setInterval(() => {
+                    if (availableTags.length > 0) {
+                        populateTagsSelect();
+                        clearInterval(checkTags);
+                    }
+                }, 100);
+            }
+        }
+        
+        function applyFilters() {
+            const statusFilter = document.getElementById('statusFilter').value;
+            const priorityFilter = document.getElementById('priorityFilter').value;
+            const eisenhowerFilter = document.getElementById('eisenhowerFilter').value;
+            
+            console.log('Applying filters:', {
+                status: statusFilter,
+                priority: priorityFilter,
+                eisenhower: eisenhowerFilter,
+                selectedTags: selectedTags
+            });
+            
+            console.log('All tasks data:', allTasks.map(task => ({
+                element: task.element,
+                status: task.status,
+                priority: task.priority,
+                eisenhower: task.eisenhower,
+                tags: task.tags
+            })));
+            
+            allTasks.forEach(task => {
+                let show = true;
+                
+                if (statusFilter && task.status !== statusFilter) show = false;
+                if (priorityFilter && task.priority !== priorityFilter) show = false;
+                if (eisenhowerFilter && task.eisenhower !== eisenhowerFilter) {
+                    console.log('Eisenhower filter mismatch:', {
+                        filter: eisenhowerFilter,
+                        taskEisenhower: task.eisenhower,
+                        taskElement: task.element
+                    });
+                    show = false;
+                } else if (eisenhowerFilter && task.eisenhower === eisenhowerFilter) {
+                    console.log('Eisenhower filter match:', {
+                        filter: eisenhowerFilter,
+                        taskEisenhower: task.eisenhower
+                    });
+                }
+                
+                // Check tags filter
+                if (selectedTags.length > 0) {
+                    const taskTags = task.tags.toLowerCase();
+                    const hasAnySelectedTag = selectedTags.some(selectedTag => 
+                        taskTags.includes(selectedTag.toLowerCase())
+                    );
+                    if (!hasAnySelectedTag) show = false;
+                }
+                
+                task.element.style.display = show ? 'block' : 'none';
+            });
+        }
+        
+        // Load tasks and tags on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            // Store all tasks for filtering
+            allTasks = Array.from(document.querySelectorAll('.task-card')).map(card => {
+                const priorityEl = card.querySelector('.priority-high, .priority-medium, .priority-low');
+                const eisenhowerEl = card.querySelector('[class*="eisenhower-"]');
+                
+                let priority = '';
+                if (priorityEl) {
+                    const classes = priorityEl.className.split(' ');
+                    const priorityClass = classes.find(cls => cls.startsWith('priority-'));
+                    if (priorityClass) {
+                        priority = priorityClass.split('-')[1];
+                    }
+                }
+                
+                let eisenhower = '';
+                if (eisenhowerEl) {
+                    const classes = eisenhowerEl.className.split(' ');
+                    const eisenhowerClass = classes.find(cls => cls.startsWith('eisenhower-'));
+                    if (eisenhowerClass) {
+                        // Extract the full eisenhower category from class name
+                        eisenhower = eisenhowerClass.replace('eisenhower-', '');
+                        console.log('Found eisenhower class:', eisenhowerClass, 'extracted:', eisenhower);
+                    } else {
+                        console.log('No eisenhower class found in:', classes);
+                    }
+                } else {
+                    console.log('No eisenhower element found for card:', card);
+                }
+                
+                return {
+                    element: card,
+                    status: card.dataset.currentStatus,
+                    priority: priority,
+                    eisenhower: eisenhower,
+                    tags: card.querySelector('.task-tags')?.textContent || ''
+                };
+            });
+            
+            // Load available tags
+            loadAvailableTags();
+            
+            // Set up filter event listeners
+            document.getElementById('statusFilter').addEventListener('change', applyFilters);
+            document.getElementById('priorityFilter').addEventListener('change', applyFilters);
+            document.getElementById('eisenhowerFilter').addEventListener('change', applyFilters);
+            
+            // Set up tags filter
+            setupTagsFilter();
+        });
+
+        // Drag & Drop functionality
+        document.addEventListener('DOMContentLoaded', function() {
+            const taskCards = document.querySelectorAll('.task-card');
+            const kanbanColumns = document.querySelectorAll('.kanban-column');
+            const eisenhowerQuadrants = document.querySelectorAll('.eisenhower-quadrant');
+            
+            // Add drag event listeners to task cards
+            taskCards.forEach(card => {
+                card.addEventListener('dragstart', handleDragStart);
+                card.addEventListener('dragend', handleDragEnd);
+            });
+            
+            // Add drop event listeners to columns/quadrants
+            [...kanbanColumns, ...eisenhowerQuadrants].forEach(container => {
+                container.addEventListener('dragover', handleDragOver);
+                container.addEventListener('drop', handleDrop);
+                container.addEventListener('dragenter', handleDragEnter);
+                container.addEventListener('dragleave', handleDragLeave);
+            });
+        });
+
+        function handleDragStart(e) {
+            e.target.classList.add('dragging');
+            e.dataTransfer.effectAllowed = 'move';
+            e.dataTransfer.setData('text/html', e.target.outerHTML);
+            e.dataTransfer.setData('text/plain', e.target.dataset.taskId);
+        }
+
+        function handleDragEnd(e) {
+            e.target.classList.remove('dragging');
+        }
+
+        function handleDragOver(e) {
+            e.preventDefault();
+            e.dataTransfer.dropEffect = 'move';
+        }
+
+        function handleDragEnter(e) {
+            e.preventDefault();
+            e.target.classList.add('drag-over');
+        }
+
+        function handleDragLeave(e) {
+            e.target.classList.remove('drag-over');
+        }
+
+        function handleDrop(e) {
+            e.preventDefault();
+            e.target.classList.remove('drag-over');
+            
+            const taskId = e.dataTransfer.getData('text/plain');
+            const taskCard = document.querySelector(`[data-task-id="${taskId}"]`);
+            
+            if (!taskCard) return;
+            
+            let newStatus = null;
+            
+            // Determine new status based on drop target
+            if (e.target.classList.contains('kanban-column')) {
+                newStatus = e.target.dataset.status;
+            } else if (e.target.classList.contains('eisenhower-quadrant')) {
+                // For Eisenhower mode, we need to map quadrant to status
+                // This is a simplified mapping - you might want to make this configurable
+                const eisenhowerToStatus = {
+                    'urgent_important': 'working',
+                    'urgent_not_important': 'working', 
+                    'not_urgent_important': 'think',
+                    'not_urgent_not_important': 'later'
+                };
+                newStatus = eisenhowerToStatus[e.target.dataset.eisenhower];
+            }
+            
+            if (newStatus && newStatus !== taskCard.dataset.currentStatus) {
+                // Update task status via API
+                fetch('/update_task_status', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        task_id: parseInt(taskId),
+                        status: newStatus
+                    })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        // Reload page to reflect changes
+                        window.location.reload();
+                    } else {
+                        console.error('Failed to update task status:', data.error);
+                        alert('Ошибка при обновлении статуса задачи');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Ошибка при обновлении статуса задачи');
+                });
             }
         }
     </script>
