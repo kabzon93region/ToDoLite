@@ -1,7 +1,14 @@
 <div class="task-card" draggable="true" data-task-id="{{ task[0] }}" data-current-status="{{ task[4] }}">
     <div class="task-header">
         <div>
-            <div class="task-title">{{ task[1] }}</div>
+            <div class="task-title">
+                {% set title_text = task[1][:31] %}
+                {% if task[1]|length > 31 %}
+                    {{ title_text }}...
+                {% else %}
+                    {{ title_text }}
+                {% endif %}
+            </div>
             <div class="task-meta">
                 <span class="task-badge status-{{ task[4] }}">
                     {{ cfg.statuses_labels[task[4]] if cfg.statuses_labels and task[4] in cfg.statuses_labels else task[4] }}
@@ -20,15 +27,22 @@
     </div>
     
     {% if task[2] %}
-    <div class="task-description">{{ task[2] }}</div>
+    <div class="task-description">
+        {% set desc_text = task[2][:43] %}
+        {% if task[2]|length > 43 %}
+            {{ desc_text }}...
+        {% else %}
+            {{ desc_text }}
+        {% endif %}
+    </div>
     {% endif %}
     
     <div class="task-dates">
         {% if task[9] %}
-        <span>📅 Отложено: {{ task[9]|ru_date }}</span>
+        <span class="date-highlight date-scheduled" data-date="{{ task[9] }}">📅 Отложено: {{ task[9]|ru_date }}</span>
         {% endif %}
         {% if task[10] %}
-        <span>⏰ Срок: {{ task[10]|ru_date }}</span>
+        <span class="date-highlight date-due" data-date="{{ task[10] }}">⏰ Срок: {{ task[10]|ru_date }}</span>
         {% endif %}
     </div>
     

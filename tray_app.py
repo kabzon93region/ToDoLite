@@ -32,14 +32,10 @@ class TaskManagerTray:
         # Используем простой текст вместо эмодзи
         draw.text((25, 25), "TD", fill='black')
         
-        # Создаем меню трея
+        # Создаем упрощенное меню трея
         menu = Menu(
-            MenuItem("Запустить сервер", self.start_server, enabled=lambda item: not self.is_server_running),
-            MenuItem("Перезапустить сервер", self.restart_server),
-            MenuItem("Остановить сервер", self.stop_server, enabled=lambda item: self.is_server_running),
-            Menu.SEPARATOR,
             MenuItem("Открыть в браузере", self.open_browser),
-            MenuItem("Выход", self.quit_app)
+            MenuItem("Остановить и выйти", self.quit_app)
         )
         
         return Icon("Задачник", image, menu=menu)
@@ -49,12 +45,8 @@ class TaskManagerTray:
         if hasattr(self, 'icon') and self.icon:
             # Создаем новое меню с актуальным состоянием
             new_menu = Menu(
-                MenuItem("Запустить сервер", self.start_server, enabled=lambda item: not self.is_server_running),
-                MenuItem("Перезапустить сервер", self.restart_server),
-                MenuItem("Остановить сервер", self.stop_server, enabled=lambda item: self.is_server_running),
-                Menu.SEPARATOR,
                 MenuItem("Открыть в браузере", self.open_browser),
-                MenuItem("Выход", self.quit_app)
+                MenuItem("Остановить и выйти", self.quit_app)
             )
             self.icon.menu = new_menu
     
@@ -166,22 +158,31 @@ class TaskManagerTray:
                 # Сначала пытаемся корректно завершить
                 try:
                     self.server_process.terminate()
-                    self.server_process.wait(timeout=5)
+                    self.server_process.wait(timeout=3)
                 except subprocess.TimeoutExpired:
                     # Если не отвечает, принудительно завершаем
                     self.log_message("Принудительное завершение сервера...")
                     self.server_process.kill()
-                    self.server_process.wait(timeout=3)
+                    self.server_process.wait(timeout=2)
                 except Exception as e:
                     self.log_message(f"Ошибка при завершении: {e}")
                     # Пытаемся принудительно завершить
                     try:
                         self.server_process.kill()
-                        self.server_process.wait(timeout=3)
+                        self.server_process.wait(timeout=2)
                     except:
                         pass
                 
                 self.server_process = None
+            
+            # Дополнительно завершаем все процессы pythonw.exe
+            try:
+                import subprocess
+                subprocess.run(['taskkill', '/F', '/IM', 'pythonw.exe', '/T'], 
+                             capture_output=True, timeout=5)
+                self.log_message("Завершены все процессы pythonw.exe")
+            except:
+                pass
             
             self.is_server_running = False
             self.log_message("Сервер остановлен")
@@ -192,20 +193,6 @@ class TaskManagerTray:
             # Сбрасываем состояние даже при ошибке
             self.is_server_running = False
             self.server_process = None
-    
-    def restart_server(self, icon=None, item=None):
-        """Перезапускает сервер"""
-        self.log_message("Перезапуск сервера...")
-        
-        # Останавливаем сервер
-        if self.is_server_running:
-            self.stop_server()
-            # Ждем полной остановки
-            time.sleep(2)
-        
-        # Запускаем сервер заново
-        self.start_server()
-    
     
     def open_browser(self, icon=None, item=None):
         """Открывает задачник в браузере"""
@@ -225,13 +212,23 @@ class TaskManagerTray:
             try:
                 if self.server_process:
                     self.server_process.terminate()
-                    self.server_process.wait(timeout=3)
+                    self.server_process.wait(timeout=2)
             except:
                 try:
                     if self.server_process:
                         self.server_process.kill()
+                        self.server_process.wait(timeout=1)
                 except:
                     pass
+        
+        # Дополнительно завершаем все процессы pythonw.exe
+        try:
+            import subprocess
+            subprocess.run(['taskkill', '/F', '/IM', 'pythonw.exe', '/T'], 
+                         capture_output=True, timeout=3)
+            self.log_message("Завершены все процессы pythonw.exe")
+        except:
+            pass
         
         # Закрываем консоль
         if self.console_window:
@@ -241,7 +238,14 @@ class TaskManagerTray:
                 pass
         
         # Останавливаем иконку трея
-        self.icon.stop()
+        try:
+            self.icon.stop()
+        except:
+            pass
+        
+        # Принудительно завершаем текущий процесс
+        import os
+        os._exit(0)
     
     def run(self):
         """Запускает приложение"""

@@ -195,13 +195,20 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            background: #eef2ff;
+            background: #2d2d30;
+            border: 1px solid #3c3c3c;
             border-radius: 8px;
+            color: #d4d4d4;
+            transition: background-color 0.3s;
+        }
+
+        .edit-task-header:hover {
+            background: #3c3c3c;
         }
 
         .edit-toggle-icon {
             font-size: 1.1em;
-            color: #6c757d;
+            color: #d4d4d4;
             transition: transform 0.3s;
         }
 
@@ -357,6 +364,61 @@
                 grid-template-columns: 1fr;
             }
         }
+
+        .date-highlight {
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-weight: bold;
+            border: 1px solid;
+        }
+
+        .date-scheduled-very-far {
+            background-color: #1e3a8a;
+            color: #93c5fd;
+            border-color: #3b82f6;
+        }
+
+        .date-scheduled-far {
+            background-color: #16a34a;
+            color: #dcfce7;
+            border-color: #22c55e;
+        }
+
+        .date-scheduled-near {
+            background-color: #fbbf24;
+            color: #92400e;
+            border-color: #f59e0b;
+        }
+
+        .date-scheduled-today {
+            background-color: #f97316;
+            color: #9a3412;
+            border-color: #ea580c;
+        }
+
+        .date-due-very-far {
+            background-color: #1e3a8a;
+            color: #93c5fd;
+            border-color: #3b82f6;
+        }
+
+        .date-due-far {
+            background-color: #16a34a;
+            color: #dcfce7;
+            border-color: #22c55e;
+        }
+
+        .date-due-near {
+            background-color: #fbbf24;
+            color: #92400e;
+            border-color: #f59e0b;
+        }
+
+        .date-due-today {
+            background-color: #dc2626;
+            color: #fecaca;
+            border-color: #ef4444;
+        }
     </style>
 </head>
 <body>
@@ -401,11 +463,19 @@
                     <div class="task-dates">
                         <div class="date-item">
                             <div class="date-label">📅 Дата отложения</div>
-                            <div class="date-value">{{ task[9]|ru_date or 'Не указана' }}</div>
+                            {% if task[9] %}
+                            <div class="date-value date-highlight date-scheduled" data-date="{{ task[9] }}">{{ task[9]|ru_date }}</div>
+                            {% else %}
+                            <div class="date-value">Не указана</div>
+                            {% endif %}
                         </div>
                         <div class="date-item">
                             <div class="date-label">⏰ Срок выполнения</div>
-                            <div class="date-value">{{ task[10]|ru_date or 'Не указан' }}</div>
+                            {% if task[10] %}
+                            <div class="date-value date-highlight date-due" data-date="{{ task[10] }}">{{ task[10]|ru_date }}</div>
+                            {% else %}
+                            <div class="date-value">Не указан</div>
+                            {% endif %}
                         </div>
                         <div class="date-item">
                             <div class="date-label">📅 Дата создания</div>
@@ -575,6 +645,79 @@ function toggleEdit(){
   }
 }
 
+// Function to highlight dates based on proximity to today
+function highlightDates() {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    // Calculate working days (Monday-Friday)
+    function getWorkingDaysBetween(startDate, endDate) {
+        let count = 0;
+        const current = new Date(startDate);
+        while (current <= endDate) {
+            const dayOfWeek = current.getDay();
+            if (dayOfWeek !== 0 && dayOfWeek !== 6) { // Not Sunday (0) or Saturday (6)
+                count++;
+            }
+            current.setDate(current.getDate() + 1);
+        }
+        return count;
+    }
+    
+    // Process all date elements
+    document.querySelectorAll('.date-highlight').forEach(element => {
+        const dateStr = element.getAttribute('data-date');
+        if (!dateStr) return;
+        
+        const taskDate = new Date(dateStr);
+        taskDate.setHours(0, 0, 0, 0);
+        
+        const isScheduled = element.classList.contains('date-scheduled');
+        const isDue = element.classList.contains('date-due');
+        
+        if (!isScheduled && !isDue) return;
+        
+        // Calculate working days between today and task date
+        const workingDays = getWorkingDaysBetween(today, taskDate);
+        
+        // Remove existing highlight classes
+        element.classList.remove('date-scheduled-very-far', 'date-scheduled-far', 'date-scheduled-near', 'date-scheduled-today');
+        element.classList.remove('date-due-very-far', 'date-due-far', 'date-due-near', 'date-due-today');
+        
+        // Apply appropriate highlight class
+        if (workingDays === 0) {
+            // Today
+            if (isScheduled) {
+                element.classList.add('date-scheduled-today');
+            } else if (isDue) {
+                element.classList.add('date-due-today');
+            }
+        } else if (workingDays === 1) {
+            // Tomorrow (1 working day)
+            if (isScheduled) {
+                element.classList.add('date-scheduled-near');
+            } else if (isDue) {
+                element.classList.add('date-due-near');
+            }
+        } else if (workingDays <= 2) {
+            // 2 working days - green
+            if (isScheduled) {
+                element.classList.add('date-scheduled-far');
+            } else if (isDue) {
+                element.classList.add('date-due-far');
+            }
+        } else if (workingDays <= 6) {
+            // 3-6 working days - blue
+            if (isScheduled) {
+                element.classList.add('date-scheduled-very-far');
+            } else if (isDue) {
+                element.classList.add('date-due-very-far');
+            }
+        }
+        // More than 6 working days - no highlight (default gray)
+    });
+}
+
 // Авто-сворачивание формы редактирования, если задача завершена/отменена
 document.addEventListener('DOMContentLoaded', function(){
   const form = document.getElementById('editForm');
@@ -584,6 +727,9 @@ document.addEventListener('DOMContentLoaded', function(){
     form.style.display = 'block';
     if(icon){ icon.classList.add('rotated'); }
   }
+  
+  // Highlight dates
+  highlightDates();
 });
 </script>
 </body>

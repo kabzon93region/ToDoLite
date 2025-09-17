@@ -294,10 +294,14 @@
         }
 
         .task-title {
-            font-size: 1em;
+            font-size: 1.1em;
             font-weight: bold;
             color: #d4d4d4;
             margin-bottom: 4px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 34ch;
         }
 
         .task-meta {
@@ -352,6 +356,10 @@
             margin-bottom: 12px;
             line-height: 1.3;
             font-size: 11px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 45ch;
         }
 
         .task-dates {
@@ -360,6 +368,61 @@
             margin-bottom: 12px;
             font-size: 0.8em;
             color: #c5c5c5;
+        }
+
+        .date-highlight {
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-weight: bold;
+            border: 1px solid;
+        }
+
+        .date-scheduled-very-far {
+            background-color: #1e3a8a;
+            color: #93c5fd;
+            border-color: #3b82f6;
+        }
+
+        .date-scheduled-far {
+            background-color: #16a34a;
+            color: #dcfce7;
+            border-color: #22c55e;
+        }
+
+        .date-scheduled-near {
+            background-color: #fbbf24;
+            color: #92400e;
+            border-color: #f59e0b;
+        }
+
+        .date-scheduled-today {
+            background-color: #f97316;
+            color: #9a3412;
+            border-color: #ea580c;
+        }
+
+        .date-due-very-far {
+            background-color: #1e3a8a;
+            color: #93c5fd;
+            border-color: #3b82f6;
+        }
+
+        .date-due-far {
+            background-color: #16a34a;
+            color: #dcfce7;
+            border-color: #22c55e;
+        }
+
+        .date-due-near {
+            background-color: #fbbf24;
+            color: #92400e;
+            border-color: #f59e0b;
+        }
+
+        .date-due-today {
+            background-color: #dc2626;
+            color: #fecaca;
+            border-color: #ef4444;
         }
 
         .task-actions {
@@ -801,6 +864,79 @@
                 task.element.style.display = show ? 'block' : 'none';
             });
         }
+
+        // Function to highlight dates based on proximity to today
+        function highlightDates() {
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            
+            // Calculate working days (Monday-Friday)
+            function getWorkingDaysBetween(startDate, endDate) {
+                let count = 0;
+                const current = new Date(startDate);
+                while (current <= endDate) {
+                    const dayOfWeek = current.getDay();
+                    if (dayOfWeek !== 0 && dayOfWeek !== 6) { // Not Sunday (0) or Saturday (6)
+                        count++;
+                    }
+                    current.setDate(current.getDate() + 1);
+                }
+                return count;
+            }
+            
+            // Process all date elements
+            document.querySelectorAll('.date-highlight').forEach(element => {
+                const dateStr = element.getAttribute('data-date');
+                if (!dateStr) return;
+                
+                const taskDate = new Date(dateStr);
+                taskDate.setHours(0, 0, 0, 0);
+                
+                const isScheduled = element.classList.contains('date-scheduled');
+                const isDue = element.classList.contains('date-due');
+                
+                if (!isScheduled && !isDue) return;
+                
+                // Calculate working days between today and task date
+                const workingDays = getWorkingDaysBetween(today, taskDate);
+                
+                // Remove existing highlight classes
+                element.classList.remove('date-scheduled-very-far', 'date-scheduled-far', 'date-scheduled-near', 'date-scheduled-today');
+                element.classList.remove('date-due-very-far', 'date-due-far', 'date-due-near', 'date-due-today');
+                
+                // Apply appropriate highlight class
+                if (workingDays === 0) {
+                    // Today
+                    if (isScheduled) {
+                        element.classList.add('date-scheduled-today');
+                    } else if (isDue) {
+                        element.classList.add('date-due-today');
+                    }
+                } else if (workingDays === 1) {
+                    // Tomorrow (1 working day)
+                    if (isScheduled) {
+                        element.classList.add('date-scheduled-near');
+                    } else if (isDue) {
+                        element.classList.add('date-due-near');
+                    }
+                } else if (workingDays <= 2) {
+                    // 2 working days - green
+                    if (isScheduled) {
+                        element.classList.add('date-scheduled-far');
+                    } else if (isDue) {
+                        element.classList.add('date-due-far');
+                    }
+                } else if (workingDays <= 6) {
+                    // 3-6 working days - blue
+                    if (isScheduled) {
+                        element.classList.add('date-scheduled-very-far');
+                    } else if (isDue) {
+                        element.classList.add('date-due-very-far');
+                    }
+                }
+                // More than 6 working days - no highlight (default gray)
+            });
+        }
         
         // Load tasks and tags on page load
         document.addEventListener('DOMContentLoaded', function() {
@@ -852,6 +988,9 @@
             
             // Set up tags filter
             setupTagsFilter();
+            
+            // Highlight dates
+            highlightDates();
         });
 
         // Drag & Drop functionality
