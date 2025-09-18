@@ -441,6 +441,13 @@
             text-transform: uppercase;
         }
 
+        /* Нейтральный статус без цветной подложки */
+        .status-plain {
+            background: transparent;
+            color: #d4d4d4;
+            border: 1px solid #3c3c3c;
+        }
+
         .status-new { background: #e3f2fd; color: #1976d2; }
         .status-think { background: #fff3e0; color: #f57c00; }
         .status-later { background: #f3e5f5; color: #7b1fa2; }
@@ -543,10 +550,11 @@
         
         .task-tags {
             font-size: 0.8em;
-            color: #6c757d;
-            background: #3c3c3c;
+            color: #cfe8ff; /* более светло-голубой для темного фона */
+            background: #2a2a2a; /* чуть темнее фон для контраста */
             padding: 2px 6px;
             border-radius: 4px;
+            border: 1px solid #4a4a4a; /* тонкая рамка для сепарации */
             max-width: 200px;
             overflow: hidden;
             text-overflow: ellipsis;

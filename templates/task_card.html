@@ -10,7 +10,7 @@
                 {% endif %}
             </div>
             <div class="task-meta">
-                <span class="task-badge status-{{ task[4] }}">
+                <span class="task-badge status-plain">
                     {{ cfg.statuses_labels[task[4]] if cfg.statuses_labels and task[4] in cfg.statuses_labels else task[4] }}
                 </span>
                 <span class="task-badge priority-{{ task[5] }}">

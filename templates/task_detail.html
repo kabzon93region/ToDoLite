@@ -504,6 +504,75 @@
             color: #764ba2;
         }
 
+        /* Рендер форматированного содержимого: ссылки, цитаты, код */
+        .info-value a,
+        .comment-text a {
+            color: #6cb5ec;
+            text-decoration: underline;
+        }
+
+        .info-value a:hover,
+        .comment-text a:hover {
+            color: #764ba2;
+        }
+
+        .info-value blockquote,
+        .comment-text blockquote {
+            border-left: 3px solid #569cd6;
+            margin: 8px 0;
+            padding: 8px 12px;
+            color: #c5c5c5;
+            background: #262626;
+            border-radius: 4px;
+        }
+
+        .info-value pre,
+        .comment-text pre {
+            background: #111;
+            border: 1px solid #333;
+            padding: 8px 10px;
+            border-radius: 6px;
+            overflow-x: auto;
+            white-space: pre;
+        }
+
+        .info-value code,
+        .comment-text code {
+            background: #111;
+            border: 1px solid #333;
+            padding: 2px 4px;
+            border-radius: 4px;
+        }
+
+        /* Списки в опубликованном тексте */
+        .info-value ol,
+        .comment-text ol {
+            margin: 8px 0 8px 0;
+            padding-left: 1.2em; /* небольшой отступ: цифры ближе к началу текста */
+            list-style-type: decimal;
+            list-style-position: outside;
+        }
+
+        .info-value ul,
+        .comment-text ul {
+            margin: 8px 0 8px 0;
+            padding-left: 1.8em; /* больший отступ: точки дальше от начала текста */
+            list-style-type: disc;
+            list-style-position: outside;
+        }
+
+        /* Вложенные списки чуть глубже */
+        .info-value li ul,
+        .comment-text li ul {
+            padding-left: 1.6em;
+            list-style-type: circle;
+        }
+        .info-value li ol,
+        .comment-text li ol {
+            padding-left: 1.4em;
+            list-style-type: lower-alpha;
+        }
+
         @media (max-width: 768px) {
             .container {
                 margin: 10px;
@@ -647,7 +716,7 @@
                     {% if task[3] %}
                     <div class="info-item">
                         <span class="info-label">Подробное описание</span>
-                        <div class="info-value">{{ task[3] }}</div>
+                        <div class="info-value">{{ task[3]|safe }}</div>
                     </div>
                     {% endif %}
 
@@ -705,7 +774,7 @@
                             <strong>Комментарий</strong>
                             <span class="comment-date">{{ comment[3] }}</span>
                         </div>
-                        <div class="comment-text">{{ comment[2] }}</div>
+                        <div class="comment-text">{{ comment[2]|safe }}</div>
                     </div>
                     {% endfor %}
                 {% else %}
@@ -779,7 +848,7 @@
                             <button type="button" onclick="exec('insertHorizontalRule')">— Разделитель</button>
                             <button type="button" onclick="var url=prompt('Ссылка:','https://'); if(url) exec('createLink',url);">🔗 Ссылка</button>
                         </div>
-                        <div id="full_description_editor" class="rtf-editor" contenteditable="true">{{ task[3] or '' }}</div>
+                        <div id="full_description_editor" class="rtf-editor" contenteditable="true">{{ (task[3] or '')|safe }}</div>
                         <textarea id="full_description" name="full_description" rows="3" style="display:none;"></textarea>
                     </div>
                     <div class="form-group">
