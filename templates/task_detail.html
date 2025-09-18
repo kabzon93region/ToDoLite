@@ -331,6 +331,32 @@
             color: #c5c5c5;
             background: #262626;
         }
+        
+        /* Стили для списков в WYSIWYG редакторе */
+        .rtf-editor ol {
+            margin: 8px 0 8px 0;
+            padding-left: 1.2em;
+            list-style-type: decimal;
+            list-style-position: outside;
+        }
+        
+        .rtf-editor ul {
+            margin: 8px 0 8px 0;
+            padding-left: 1.8em;
+            list-style-type: disc;
+            list-style-position: outside;
+        }
+        
+        /* Вложенные списки в редакторе */
+        .rtf-editor li ul {
+            padding-left: 1.6em;
+            list-style-type: circle;
+        }
+        
+        .rtf-editor li ol {
+            padding-left: 1.4em;
+            list-style-type: lower-alpha;
+        }
 
         .comments-section {
             margin-top: 30px;
@@ -360,6 +386,10 @@
             color: #e0e0e0;
             line-height: 1.5;
             background: #1e1e1e;
+            padding: 12px;
+            border-radius: 6px;
+            border: 1px solid #3c3c3c;
+            margin-top: 8px;
         }
 
         /* Стили для ввода тегов в формах */

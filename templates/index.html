@@ -49,7 +49,7 @@
             align-items: center;
         }
         
-        .filter-select, .filter-input {
+        .filter-select, .filter-input, .filter-search {
             background: #2d2d30;
             border: 1px solid #3c3c3c;
             color: #d4d4d4;
@@ -58,13 +58,22 @@
             font-size: 12px;
         }
         
-        .filter-select:focus, .filter-input:focus {
+        .filter-select:focus, .filter-input:focus, .filter-search:focus {
             outline: none;
             border-color: #007acc;
         }
         
         .filter-input {
             min-width: 150px;
+        }
+        
+        .filter-search {
+            min-width: 200px;
+            flex-grow: 1;
+        }
+        
+        .filter-search::placeholder {
+            color: #6c757d;
         }
         
         .filter-btn {
@@ -331,6 +340,108 @@
             background: #252526;
         }
 
+        /* WYSIWYG Editor Styles */
+        .rtf-toolbar {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 4px;
+            padding: 8px;
+            background: #2d2d30;
+            border: 1px solid #3c3c3c;
+            border-bottom: none;
+            border-radius: 6px 6px 0 0;
+        }
+
+        .rtf-toolbar button {
+            background: #1e1e1e;
+            color: #d4d4d4;
+            border: 1px solid #3c3c3c;
+            padding: 4px 8px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: all 0.2s;
+        }
+
+        .rtf-toolbar button:hover {
+            background: #3c3c3c;
+            border-color: #569cd6;
+        }
+
+        .rtf-toolbar button.active {
+            background: #569cd6;
+            color: #1e1e1e;
+        }
+
+        .rtf-editor {
+            min-height: 100px;
+            padding: 12px;
+            background: #1e1e1e;
+            color: #d4d4d4;
+            border: 1px solid #3c3c3c;
+            border-radius: 0 0 6px 6px;
+            outline: none;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-size: 13px;
+            line-height: 1.5;
+        }
+
+        .rtf-editor:focus {
+            border-color: #569cd6;
+            background: #252526;
+        }
+
+        .rtf-editor pre {
+            background: #111;
+            border: 1px solid #333;
+            padding: 8px 10px;
+            border-radius: 6px;
+            overflow-x: auto;
+            white-space: pre;
+        }
+
+        .rtf-editor code {
+            background: #111;
+            border: 1px solid #333;
+            padding: 2px 4px;
+            border-radius: 4px;
+        }
+
+        .rtf-editor blockquote {
+            border-left: 3px solid #569cd6;
+            margin: 8px 0;
+            padding: 8px 12px;
+            color: #c5c5c5;
+            background: #262626;
+            border-radius: 4px;
+        }
+        
+        /* Стили для списков в WYSIWYG редакторе */
+        .rtf-editor ol {
+            margin: 8px 0 8px 0;
+            padding-left: 1.2em;
+            list-style-type: decimal;
+            list-style-position: outside;
+        }
+        
+        .rtf-editor ul {
+            margin: 8px 0 8px 0;
+            padding-left: 1.8em;
+            list-style-type: disc;
+            list-style-position: outside;
+        }
+        
+        /* Вложенные списки в редакторе */
+        .rtf-editor li ul {
+            padding-left: 1.6em;
+            list-style-type: circle;
+        }
+        
+        .rtf-editor li ol {
+            padding-left: 1.4em;
+            list-style-type: lower-alpha;
+        }
+
         .btn {
             background: #569cd6;
             color: #1e1e1e;
@@ -573,11 +684,108 @@
         .btn-info { background: #17a2b8; }
         .btn-danger { background: #dc3545; }
 
+        .scrollbar-container {
+            background: #1e1e1e;
+            border: 1px solid #3c3c3c;
+            position: relative;
+        }
+        
+        /* Горизонтальные полосы прокрутки */
+        .top-scrollbar, .bottom-scrollbar {
+            height: 20px;
+            margin: 4px 0;
+            overflow-x: auto;
+            overflow-y: hidden;
+        }
+        
+        .top-scrollbar {
+            border-bottom: 1px solid #3c3c3c;
+            margin-bottom: 8px;
+        }
+        
+        .bottom-scrollbar {
+            border-top: 1px solid #3c3c3c;
+            margin-top: 8px;
+        }
+        
+        /* Вертикальные полосы прокрутки */
+        .left-scrollbar, .right-scrollbar {
+            width: 20px;
+            margin: 0 4px;
+            overflow-y: auto;
+            overflow-x: hidden;
+        }
+        
+        .left-scrollbar {
+            border-right: 1px solid #3c3c3c;
+            margin-right: 8px;
+        }
+        
+        .right-scrollbar {
+            border-left: 1px solid #3c3c3c;
+            margin-left: 8px;
+        }
+        
+        /* Контейнер для канбан с вертикальными полосами */
+        .kanban-wrapper {
+            display: flex;
+            align-items: flex-start;
+        }
+        
+        .scrollbar-content {
+            /* Для горизонтальных полос */
+            height: 1px;
+            width: 100%;
+        }
+        
+        /* Для вертикальных полос */
+        .left-scrollbar .scrollbar-content,
+        .right-scrollbar .scrollbar-content {
+            height: 100%;
+            width: 1px;
+        }
+        
         .kanban-columns {
             display: flex;
             gap: 15px;
             overflow-x: auto;
             padding: 8px 0;
+            scrollbar-width: none; /* Firefox */
+            -ms-overflow-style: none; /* IE and Edge */
+        }
+        
+        .kanban-columns::-webkit-scrollbar {
+            display: none; /* Chrome, Safari, Opera */
+        }
+        
+        /* Стили для горизонтальных полос прокрутки */
+        .top-scrollbar::-webkit-scrollbar,
+        .bottom-scrollbar::-webkit-scrollbar {
+            height: 20px;
+        }
+        
+        /* Стили для вертикальных полос прокрутки */
+        .left-scrollbar::-webkit-scrollbar,
+        .right-scrollbar::-webkit-scrollbar {
+            width: 20px;
+        }
+        
+        /* Общие стили для всех полос прокрутки */
+        .scrollbar-container::-webkit-scrollbar-track {
+            background: #1e1e1e;
+        }
+        
+        .scrollbar-container::-webkit-scrollbar-thumb {
+            background: #3c3c3c;
+            border-radius: 10px;
+        }
+        
+        .scrollbar-container::-webkit-scrollbar-thumb:hover {
+            background: #569cd6;
+        }
+        
+        .scrollbar-container::-webkit-scrollbar-corner {
+            background: #1e1e1e;
         }
 
         .kanban-column {
@@ -688,6 +896,7 @@
                 </button>
             </div>
             <div class="filters">
+                <input type="text" id="searchFilter" class="filter-search" placeholder="🔍 Поиск по тексту...">
                 <select id="statusFilter" class="filter-select">
                     <option value="">Все статусы</option>
                     {% for status in cfg.statuses_order %}
@@ -716,40 +925,35 @@
 
         <div class="add-task-section">
             <div class="add-task-header" onclick="toggleAddTask()">
-                <h2>Добавить новую задачу</h2>
+            <h2>Добавить новую задачу</h2>
                 <span class="toggle-icon" id="toggleIcon">▼</span>
             </div>
             <div class="add-task-form" id="addTaskForm" style="display: none;">
-                <form method="POST" action="/add_task">
+            <form method="POST" action="/add_task">
                 <div class="form-grid">
-                    <div class="form-group">
+                <div class="form-group">
                         <label for="title">Название задачи *</label>
-                        <input type="text" id="title" name="title" required>
-                    </div>
-                    <div class="form-group">
+                    <input type="text" id="title" name="title" required>
+                </div>
+                <div class="form-group">
                         <label for="short_description">Краткое описание *</label>
                         <input type="text" id="short_description" name="short_description" required>
-                    </div>
-                    <div class="form-group">
+                </div>
+                <div class="form-group">
                         <label for="status">Статус *</label>
                         <select id="status" name="status" required>
-                            <option value="new">Новая</option>
-                            <option value="think">На подумать</option>
-                            <option value="later">На потом</option>
-                            <option value="waiting">Ждем кого-то</option>
-                            <option value="working">В работе</option>
-                            <option value="tracking">Отслеживаем</option>
-                            <option value="done">Готово</option>
-                            <option value="cancelled">Отменено</option>
+                            {% for status in cfg.statuses_order %}
+                            <option value="{{ status }}">{{ cfg.statuses_labels[status] if cfg.statuses_labels and status in cfg.statuses_labels else status }}</option>
+                            {% endfor %}
                         </select>
                     </div>
                     <div class="form-group">
                         <label for="priority">Приоритет *</label>
                         <select id="priority" name="priority" required>
-                            <option value="low">Низкий</option>
-                            <option value="medium" selected>Средний</option>
-                            <option value="high">Высокий</option>
-                        </select>
+                        <option value="low">Низкий</option>
+                        <option value="medium" selected>Средний</option>
+                        <option value="high">Высокий</option>
+                    </select>
                     </div>
                     <div class="form-group">
                         <label for="eisenhower_priority">Приоритет Эйзенхауэра *</label>
@@ -775,7 +979,19 @@
                 </div>
                 <div class="form-group">
                     <label for="full_description">Подробное описание</label>
-                    <textarea id="full_description" name="full_description" rows="3"></textarea>
+                    <div class="rtf-toolbar">
+                        <button type="button" onclick="exec('bold')"><b>Ж</b></button>
+                        <button type="button" onclick="exec('italic')"><i>К</i></button>
+                        <button type="button" onclick="exec('underline')"><u>Ч</u></button>
+                        <button type="button" onclick="exec('insertUnorderedList')">• Список</button>
+                        <button type="button" onclick="exec('insertOrderedList')">1. Нумерованный</button>
+                        <button type="button" onclick="toggleBlock('blockquote')">❝ Цитата</button>
+                        <button type="button" onclick="toggleBlock('pre')">{'{ }'} Код</button>
+                        <button type="button" onclick="exec('insertHorizontalRule')">— Разделитель</button>
+                        <button type="button" onclick="var url=prompt('Ссылка:','https://'); if(url) exec('createLink',url);">🔗 Ссылка</button>
+                    </div>
+                    <div id="full_description_editor" class="rtf-editor" contenteditable="true" placeholder="Введите подробное описание задачи..."></div>
+                    <textarea id="full_description" name="full_description" style="display:none;"></textarea>
                 </div>
                 <div class="form-group">
                     <label for="related_threads">Связанные треды (ссылки через запятую)</label>
@@ -793,23 +1009,47 @@
                     </div>
                 </div>
                 <button type="submit" class="btn">Добавить задачу</button>
-                </form>
+            </form>
             </div>
         </div>
 
         <div class="tasks-container">
             {% if current_mode == 'kanban' %}
-                <div class="kanban-columns">
+                <!-- Верхняя полоса прокрутки -->
+                <div class="scrollbar-container top-scrollbar" id="topScrollbar">
+                    <div class="scrollbar-content" id="topScrollContent"></div>
+                </div>
+                
+                <!-- Контейнер с вертикальными полосами прокрутки -->
+                <div class="kanban-wrapper">
+                    <!-- Левая вертикальная полоса прокрутки -->
+                    <div class="scrollbar-container left-scrollbar" id="leftScrollbar">
+                        <div class="scrollbar-content" id="leftScrollContent"></div>
+                    </div>
+                    
+                    <!-- Основная область канбан -->
+                    <div class="kanban-columns" id="kanbanColumns">
                     {% for status in cfg.statuses_order %}
                     <div class="kanban-column" data-status="{{ status }}">
                         <h3>{{ cfg.statuses_labels[status] if cfg.statuses_labels and status in cfg.statuses_labels else status }}</h3>
-                        {% for task in tasks %}
+                {% for task in tasks %}
                             {% if task[4] == status %}
                                 {% include 'task_card.html' %}
-                            {% endif %}
+                        {% endif %}
                         {% endfor %}
                     </div>
                     {% endfor %}
+                    </div>
+                    
+                    <!-- Правая вертикальная полоса прокрутки -->
+                    <div class="scrollbar-container right-scrollbar" id="rightScrollbar">
+                        <div class="scrollbar-content" id="rightScrollContent"></div>
+                    </div>
+                </div>
+                
+                <!-- Нижняя полоса прокрутки -->
+                <div class="scrollbar-container bottom-scrollbar" id="bottomScrollbar">
+                    <div class="scrollbar-content" id="bottomScrollContent"></div>
                 </div>
             {% else %}
                 <div class="eisenhower-grid">
@@ -819,10 +1059,10 @@
                         {% for task in tasks %}
                             {% if task[6] == pr %}
                                 {% include 'task_card.html' %}
-                            {% endif %}
+                    {% endif %}
                         {% endfor %}
-                    </div>
-                    {% endfor %}
+                </div>
+                {% endfor %}
                 </div>
             {% endif %}
         </div>
@@ -940,52 +1180,85 @@
             const statusFilter = document.getElementById('statusFilter').value;
             const priorityFilter = document.getElementById('priorityFilter').value;
             const eisenhowerFilter = document.getElementById('eisenhowerFilter').value;
+            const searchFilter = document.getElementById('searchFilter').value.toLowerCase().trim();
             
             console.log('Applying filters:', {
                 status: statusFilter,
                 priority: priorityFilter,
                 eisenhower: eisenhowerFilter,
-                selectedTags: selectedTags
+                selectedTags: selectedTags,
+                search: searchFilter
             });
             
-            console.log('All tasks data:', allTasks.map(task => ({
-                element: task.element,
-                status: task.status,
-                priority: task.priority,
-                eisenhower: task.eisenhower,
-                tags: task.tags
-            })));
+            let visibleCount = 0;
             
             allTasks.forEach(task => {
                 let show = true;
+                const reasons = [];
                 
-                if (statusFilter && task.status !== statusFilter) show = false;
-                if (priorityFilter && task.priority !== priorityFilter) show = false;
-                if (eisenhowerFilter && task.eisenhower !== eisenhowerFilter) {
-                    console.log('Eisenhower filter mismatch:', {
-                        filter: eisenhowerFilter,
-                        taskEisenhower: task.eisenhower,
-                        taskElement: task.element
-                    });
+                // Status filter
+                if (statusFilter && task.status !== statusFilter) {
                     show = false;
-                } else if (eisenhowerFilter && task.eisenhower === eisenhowerFilter) {
-                    console.log('Eisenhower filter match:', {
-                        filter: eisenhowerFilter,
-                        taskEisenhower: task.eisenhower
-                    });
+                    reasons.push(`статус: ${task.status} != ${statusFilter}`);
                 }
                 
-                // Check tags filter
+                // Priority filter
+                if (priorityFilter && task.priority !== priorityFilter) {
+                    show = false;
+                    reasons.push(`приоритет: ${task.priority} != ${priorityFilter}`);
+                }
+                
+                // Eisenhower filter
+                if (eisenhowerFilter && task.eisenhower !== eisenhowerFilter) {
+                    show = false;
+                    reasons.push(`эйзенхауэр: ${task.eisenhower} != ${eisenhowerFilter}`);
+                }
+                
+                // Tags filter
                 if (selectedTags.length > 0) {
                     const taskTags = task.tags.toLowerCase();
                     const hasAnySelectedTag = selectedTags.some(selectedTag => 
                         taskTags.includes(selectedTag.toLowerCase())
                     );
-                    if (!hasAnySelectedTag) show = false;
+                    if (!hasAnySelectedTag) {
+                        show = false;
+                        reasons.push(`теги: не содержит ${selectedTags.join(', ')}`);
+                    }
+                }
+                
+                // Text search filter
+                if (searchFilter) {
+                    const searchText = searchFilter;
+                    const searchableText = [
+                        task.title,
+                        task.shortDescription,
+                        task.fullDescription,
+                        task.comments,
+                        task.tags
+                    ].join(' ').toLowerCase();
+                    
+                    if (!searchableText.includes(searchText)) {
+                        show = false;
+                        reasons.push(`поиск: не содержит "${searchText}"`);
+                    }
+                }
+                
+                if (show) {
+                    visibleCount++;
+                } else if (reasons.length > 0) {
+                    console.log(`Задача "${task.title}" скрыта: ${reasons.join(', ')}`);
                 }
                 
                 task.element.style.display = show ? 'block' : 'none';
             });
+            
+            console.log(`Показано задач: ${visibleCount} из ${allTasks.length}`);
+            
+            // Обновляем полосы прокрутки после фильтрации
+            setTimeout(() => {
+                const updateScrollbars = window.updateScrollbars;
+                if (updateScrollbars) updateScrollbars();
+            }, 100);
         }
 
         // Function to highlight dates based on proximity to today
@@ -1097,7 +1370,11 @@
                     status: card.dataset.currentStatus,
                     priority: priority,
                     eisenhower: eisenhower,
-                    tags: card.querySelector('.task-tags')?.textContent || ''
+                    tags: card.querySelector('.task-tags')?.textContent || '',
+                    title: card.querySelector('.task-title')?.textContent || '',
+                    shortDescription: card.querySelector('.task-description')?.textContent || '',
+                    fullDescription: card.dataset.fullDescription || '',
+                    comments: card.dataset.comments || ''
                 };
             });
             
@@ -1105,6 +1382,7 @@
             loadAvailableTags();
             
             // Set up filter event listeners
+            document.getElementById('searchFilter').addEventListener('input', applyFilters);
             document.getElementById('statusFilter').addEventListener('change', applyFilters);
             document.getElementById('priorityFilter').addEventListener('change', applyFilters);
             document.getElementById('eisenhowerFilter').addEventListener('change', applyFilters);
@@ -1369,10 +1647,164 @@
             hiddenTagsInput.value = selectedTagsForForm.map(tag => `#${tag}`).join(' ');
         }
 
+        // WYSIWYG Editor Functions
+        function exec(command, value = null) {
+            document.execCommand(command, false, value);
+            document.getElementById('full_description_editor').focus();
+        }
+
+        function getSelectionBlockElement() {
+            const selection = window.getSelection();
+            if (selection.rangeCount === 0) return null;
+            
+            let node = selection.getRangeAt(0).startContainer;
+            while (node && node.nodeType !== Node.ELEMENT_NODE) {
+                node = node.parentNode;
+            }
+            
+            while (node && !['P', 'DIV', 'BLOCKQUOTE', 'PRE', 'H1', 'H2', 'H3', 'H4', 'H5', 'H6'].includes(node.tagName)) {
+                node = node.parentNode;
+            }
+            
+            return node;
+        }
+
+        function toggleBlock(tagName) {
+            const blockElement = getSelectionBlockElement();
+            if (blockElement && blockElement.tagName.toLowerCase() === tagName) {
+                // Если уже в этом блоке, переключаем обратно на обычный параграф
+                document.execCommand('formatBlock', false, 'p');
+            } else {
+                // Применяем форматирование блока
+                document.execCommand('formatBlock', false, tagName);
+            }
+            document.getElementById('full_description_editor').focus();
+        }
+
+        function syncEditorsToTextareas() {
+            // Синхронизируем содержимое WYSIWYG редактора с textarea
+            const editor = document.getElementById('full_description_editor');
+            const textarea = document.getElementById('full_description');
+            if (editor && textarea) {
+                textarea.value = editor.innerHTML;
+            }
+        }
+
+        // Функция для синхронизации полос прокрутки
+        function setupScrollbarSync() {
+            const kanbanColumns = document.getElementById('kanbanColumns');
+            const topScrollbar = document.getElementById('topScrollbar');
+            const bottomScrollbar = document.getElementById('bottomScrollbar');
+            const leftScrollbar = document.getElementById('leftScrollbar');
+            const rightScrollbar = document.getElementById('rightScrollbar');
+            const topScrollContent = document.getElementById('topScrollContent');
+            const bottomScrollContent = document.getElementById('bottomScrollContent');
+            const leftScrollContent = document.getElementById('leftScrollContent');
+            const rightScrollContent = document.getElementById('rightScrollContent');
+            
+            if (!kanbanColumns || !topScrollbar || !bottomScrollbar || !leftScrollbar || !rightScrollbar) return;
+            
+            // Обновляем размеры полос прокрутки
+            window.updateScrollbars = function() {
+                const scrollWidth = kanbanColumns.scrollWidth;
+                const clientWidth = kanbanColumns.clientWidth;
+                const scrollHeight = kanbanColumns.scrollHeight;
+                const clientHeight = kanbanColumns.clientHeight;
+                
+                // Горизонтальные полосы
+                if (scrollWidth <= clientWidth) {
+                    topScrollbar.style.display = 'none';
+                    bottomScrollbar.style.display = 'none';
+                } else {
+                    topScrollbar.style.display = 'block';
+                    bottomScrollbar.style.display = 'block';
+                    topScrollContent.style.width = scrollWidth + 'px';
+                    bottomScrollContent.style.width = scrollWidth + 'px';
+                }
+                
+                // Вертикальные полосы
+                if (scrollHeight <= clientHeight) {
+                    leftScrollbar.style.display = 'none';
+                    rightScrollbar.style.display = 'none';
+                } else {
+                    leftScrollbar.style.display = 'block';
+                    rightScrollbar.style.display = 'block';
+                    leftScrollContent.style.height = scrollHeight + 'px';
+                    rightScrollContent.style.height = scrollHeight + 'px';
+                }
+            }
+            
+            // Синхронизация прокрутки основной области с полосами
+            function syncFromMain() {
+                const scrollLeft = kanbanColumns.scrollLeft;
+                const scrollTop = kanbanColumns.scrollTop;
+                
+                // Синхронизируем горизонтальные полосы
+                topScrollbar.scrollLeft = scrollLeft;
+                bottomScrollbar.scrollLeft = scrollLeft;
+                
+                // Синхронизируем вертикальные полосы
+                leftScrollbar.scrollTop = scrollTop;
+                rightScrollbar.scrollTop = scrollTop;
+            }
+            
+            // Синхронизация горизонтальных полос с основной областью
+            function syncHorizontalToMain(scrollbar) {
+                return function() {
+                    kanbanColumns.scrollLeft = scrollbar.scrollLeft;
+                    // Синхронизируем другую горизонтальную полосу
+                    if (scrollbar === topScrollbar) {
+                        bottomScrollbar.scrollLeft = scrollbar.scrollLeft;
+                    } else {
+                        topScrollbar.scrollLeft = scrollbar.scrollLeft;
+                    }
+                };
+            }
+            
+            // Синхронизация вертикальных полос с основной областью
+            function syncVerticalToMain(scrollbar) {
+                return function() {
+                    kanbanColumns.scrollTop = scrollbar.scrollTop;
+                    // Синхронизируем другую вертикальную полосу
+                    if (scrollbar === leftScrollbar) {
+                        rightScrollbar.scrollTop = scrollbar.scrollTop;
+                    } else {
+                        leftScrollbar.scrollTop = scrollbar.scrollTop;
+                    }
+                };
+            }
+            
+            // Добавляем обработчики событий
+            kanbanColumns.addEventListener('scroll', syncFromMain);
+            
+            // Горизонтальные полосы
+            topScrollbar.addEventListener('scroll', syncHorizontalToMain(topScrollbar));
+            bottomScrollbar.addEventListener('scroll', syncHorizontalToMain(bottomScrollbar));
+            
+            // Вертикальные полосы
+            leftScrollbar.addEventListener('scroll', syncVerticalToMain(leftScrollbar));
+            rightScrollbar.addEventListener('scroll', syncVerticalToMain(rightScrollbar));
+            
+            // Обновляем при изменении размера окна
+            window.addEventListener('resize', window.updateScrollbars);
+            
+            // Первоначальное обновление
+            window.updateScrollbars();
+        }
+
         // Инициализация при загрузке страницы
         document.addEventListener('DOMContentLoaded', function() {
             loadAvailableTagsForForms();
             setupTagsInput();
+            setupScrollbarSync();
+            
+            // Добавляем обработчик для синхронизации WYSIWYG редактора
+            const addTaskForm = document.querySelector('form[action="/add_task"]');
+            if (addTaskForm) {
+                addTaskForm.addEventListener('submit', function(e) {
+                    syncEditorsToTextareas();
+                });
+            }
         });
     </script>
 </body>

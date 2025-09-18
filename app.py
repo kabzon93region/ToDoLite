@@ -176,6 +176,97 @@ def get_tasks_by_mode(mode):
     conn.close()
     return tasks
 
+# Получить задачи по режиму отображения с комментариями для поиска
+def get_tasks_by_mode_with_comments(mode):
+    conn = sqlite3.connect('tasks.db')
+    c = conn.cursor()
+    
+    # Получаем все задачи
+    if mode == 'eisenhower':
+        c.execute("""
+            SELECT 
+                id,
+                title,
+                short_description,
+                full_description,
+                status,
+                priority,
+                eisenhower_priority,
+                assigned_to,
+                related_threads,
+                scheduled_date,
+                due_date,
+                created_at,
+                updated_at,
+                completed_at,
+                tags
+            FROM tasks
+            ORDER BY 
+                CASE priority WHEN 'high' THEN 1 WHEN 'medium' THEN 2 ELSE 3 END,
+                COALESCE(due_date, '') ASC
+        """)
+    elif mode == 'kanban':
+        c.execute("""
+            SELECT 
+                id,
+                title,
+                short_description,
+                full_description,
+                status,
+                priority,
+                eisenhower_priority,
+                assigned_to,
+                related_threads,
+                scheduled_date,
+                due_date,
+                created_at,
+                updated_at,
+                completed_at,
+                tags
+            FROM tasks
+            ORDER BY 
+                CASE priority WHEN 'high' THEN 1 WHEN 'medium' THEN 2 ELSE 3 END,
+                COALESCE(due_date, '') ASC
+        """)
+    else:
+        c.execute("""
+            SELECT 
+                id,
+                title,
+                short_description,
+                full_description,
+                status,
+                priority,
+                eisenhower_priority,
+                assigned_to,
+                related_threads,
+                scheduled_date,
+                due_date,
+                created_at,
+                updated_at,
+                completed_at,
+                tags
+            FROM tasks 
+            ORDER BY created_at DESC
+        """)
+    
+    tasks = c.fetchall()
+    
+    # Для каждой задачи получаем комментарии и добавляем их к данным задачи
+    tasks_with_comments = []
+    for task in tasks:
+        task_id = task[0]
+        c.execute("SELECT comment FROM task_comments WHERE task_id = ?", (task_id,))
+        comments = c.fetchall()
+        # Объединяем все комментарии в одну строку
+        comments_text = ' '.join([comment[0] for comment in comments])
+        # Добавляем комментарии как дополнительный элемент к кортежу задачи
+        task_with_comments = task + (comments_text,)
+        tasks_with_comments.append(task_with_comments)
+    
+    conn.close()
+    return tasks_with_comments
+
 
 def _clean_json(text: str) -> str:
     # Remove BOM
@@ -418,7 +509,7 @@ def delete_task(task_id):
 @app.route('/')
 def index():
     mode = request.args.get('mode', 'kanban')
-    tasks = get_tasks_by_mode(mode)
+    tasks = get_tasks_by_mode_with_comments(mode)
     cfg = load_config()
     return render_template('index.html', tasks=tasks, current_mode=mode, cfg=cfg)
 
