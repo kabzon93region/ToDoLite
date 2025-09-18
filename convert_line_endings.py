@@ -5,7 +5,6 @@
 """
 
 import os
-import glob
 import sys
 
 def convert_file(file_path):
@@ -44,26 +43,32 @@ def main():
     skipped = 0
     errors = 0
     
-    print("Поиск файлов для конвертации...")
-    
-    # Ищем файлы с нужными расширениями
-    for ext in extensions:
-        pattern = f"**/*{ext}"
-        files = glob.glob(pattern, recursive=True)
-        
-        for file_path in files:
-            # Пропускаем папки
-            if os.path.isdir(file_path):
-                continue
-                
-            print(f"Обработка: {file_path}")
-            
-            if convert_file(file_path):
-                print(f"  ✓ Конвертирован")
-                converted += 1
-            else:
-                print(f"  - Пропущен (уже CRLF или нет LF)")
-                skipped += 1
+    print("Поиск файлов для конвертации (текущая папка без рекурсии)...")
+
+    # Папка, где лежит сам скрипт
+    base_dir = os.path.dirname(os.path.abspath(__file__))
+
+    # Обрабатываем только файлы в текущей папке (без захода в подкаталоги и *env)
+    for name in os.listdir(base_dir):
+        file_path = os.path.join(base_dir, name)
+
+        # Пропускаем папки
+        if os.path.isdir(file_path):
+            continue
+
+        # Фильтруем по разрешённым расширениям
+        _, ext = os.path.splitext(name)
+        if ext.lower() not in extensions:
+            continue
+
+        print(f"Обработка: {file_path}")
+
+        if convert_file(file_path):
+            print(f"  ✓ Конвертирован")
+            converted += 1
+        else:
+            print(f"  - Пропущен (уже CRLF или нет LF)")
+            skipped += 1
     
     print("\n" + "=" * 60)
     print("Результаты конвертации:")

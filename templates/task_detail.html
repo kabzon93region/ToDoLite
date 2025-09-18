@@ -33,14 +33,14 @@
         .header {
             background: #252526;
             color: #d4d4d4;
-            padding: 20px;
+            padding: 16px;
             text-align: center;
             border: 1px solid #3c3c3c;
         }
 
         .header h1 {
-            font-size: 2.5em;
-            margin-bottom: 10px;
+            font-size: 2em;
+            margin-bottom: 8px;
         }
 
         .back-btn {
@@ -284,6 +284,51 @@
             box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
         }
 
+        /* Простой RTF-редактор */
+        .rtf-toolbar {
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap;
+            margin-bottom: 8px;
+        }
+        .rtf-toolbar button {
+            background: #2d2d30;
+            color: #d4d4d4;
+            border: 1px solid #3c3c3c;
+            padding: 6px 8px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .rtf-toolbar button:hover {
+            background: #3c3c3c;
+        }
+        .rtf-editor {
+            min-height: 120px;
+            padding: 10px;
+            border: 2px solid #555;
+            border-radius: 8px;
+            background: #1e1e1e;
+            color: #d4d4d4;
+        }
+        .rtf-editor:focus {
+            outline: none;
+            border-color: #007bff;
+            box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
+        }
+        .rtf-editor pre, .rtf-editor code {
+            background: #111;
+            border: 1px solid #333;
+            padding: 6px 8px;
+            border-radius: 4px;
+        }
+        .rtf-editor blockquote {
+            border-left: 3px solid #569cd6;
+            margin: 6px 0;
+            padding: 6px 10px;
+            color: #c5c5c5;
+            background: #262626;
+        }
+
         .comments-section {
             margin-top: 30px;
         }
@@ -425,7 +470,7 @@
     <div class="container">
         <div class="header">
             <a href="/" class="back-btn">← Назад к списку</a>
-            <h1>📋 Детали задачи</h1>
+            <h1>📋 {{ task[1] }}</h1>
         </div>
 
         <div class="task-content">
@@ -435,15 +480,7 @@
                     
                     <div class="task-meta">
                         <span class="task-badge status-{{ task[4] }}">
-                            {% if task[4] == 'new' %}Новая
-                            {% elif task[4] == 'think' %}На подумать
-                            {% elif task[4] == 'later' %}На потом
-                            {% elif task[4] == 'waiting' %}Ждем кого-то
-                            {% elif task[4] == 'working' %}В работе
-                            {% elif task[4] == 'tracking' %}Отслеживаем
-                            {% elif task[4] == 'done' %}Готово
-                            {% elif task[4] == 'cancelled' %}Отменено
-                            {% endif %}
+                            {{ cfg.statuses_labels[task[4]] if cfg.statuses_labels and task[4] in cfg.statuses_labels else task[4] }}
                         </span>
                         <span class="task-badge priority-{{ task[5] }}">
                             {% if task[5] == 'high' %}Высокий
@@ -531,10 +568,22 @@
                 <h3>Комментарии</h3>
                 
                 <div class="form-section">
-                    <form method="POST" action="/add_comment/{{ task[0] }}">
+                    <form method="POST" action="/add_comment/{{ task[0] }}" onsubmit="return syncEditorsToTextareas()">
                         <div class="form-group">
                             <label for="comment">Добавить комментарий</label>
-                            <textarea id="comment" name="comment" rows="3" placeholder="Введите ваш комментарий..." required></textarea>
+                            <div class="rtf-toolbar">
+                                <button type="button" onclick="exec('bold')"><b>B</b></button>
+                                <button type="button" onclick="exec('italic')"><i>I</i></button>
+                                <button type="button" onclick="exec('underline')"><u>U</u></button>
+                                <button type="button" onclick="exec('insertUnorderedList')">• Список</button>
+                                <button type="button" onclick="exec('insertOrderedList')">1. Список</button>
+                                <button type="button" onclick="toggleBlock('blockquote')">❝ Цитата</button>
+                                <button type="button" onclick="toggleBlock('pre')">{'{ }'} Код</button>
+                                <button type="button" onclick="exec('insertHorizontalRule')">— Разделитель</button>
+                                <button type="button" onclick="var url=prompt('Ссылка:','https://'); if(url) exec('createLink',url);">🔗 Ссылка</button>
+                            </div>
+                            <div id="comment_editor" class="rtf-editor" contenteditable="true" placeholder="Введите ваш комментарий..."></div>
+                            <textarea id="comment" name="comment" rows="3" style="display:none;"></textarea>
                         </div>
                         <button type="submit" class="btn">Добавить комментарий</button>
                     </form>
@@ -560,7 +609,7 @@
                     <h3>Редактировать задачу</h3>
                     <span id="editToggleIcon" class="edit-toggle-icon">▼</span>
                 </div>
-                <form id="editForm" method="POST" action="/update_task/{{ task[0] }}" style="display: none;">
+                <form id="editForm" method="POST" action="/update_task/{{ task[0] }}" style="display: none;" onsubmit="syncEditorsToTextareas()">
                     <div class="form-group">
                         <label for="title">Название задачи *</label>
                         <input type="text" id="title" name="title" value="{{ task[1] }}" required>
@@ -610,7 +659,19 @@
                     </div>
                     <div class="form-group">
                         <label for="full_description">Подробное описание</label>
-                        <textarea id="full_description" name="full_description" rows="3">{{ task[3] or '' }}</textarea>
+                        <div class="rtf-toolbar">
+                            <button type="button" onclick="exec('bold')"><b>B</b></button>
+                            <button type="button" onclick="exec('italic')"><i>I</i></button>
+                            <button type="button" onclick="exec('underline')"><u>U</u></button>
+                            <button type="button" onclick="exec('insertUnorderedList')">• Список</button>
+                            <button type="button" onclick="exec('insertOrderedList')">1. Список</button>
+                            <button type="button" onclick="toggleBlock('blockquote')">❝ Цитата</button>
+                            <button type="button" onclick="toggleBlock('pre')">{'{ }'} Код</button>
+                            <button type="button" onclick="exec('insertHorizontalRule')">— Разделитель</button>
+                            <button type="button" onclick="var url=prompt('Ссылка:','https://'); if(url) exec('createLink',url);">🔗 Ссылка</button>
+                        </div>
+                        <div id="full_description_editor" class="rtf-editor" contenteditable="true">{{ task[3] or '' }}</div>
+                        <textarea id="full_description" name="full_description" rows="3" style="display:none;"></textarea>
                     </div>
                     <div class="form-group">
                         <label for="related_threads">Связанные треды (ссылки через запятую)</label>
@@ -643,6 +704,53 @@ function toggleEdit(){
     form.style.display = 'none';
     icon.classList.remove('rotated');
   }
+}
+
+function exec(cmd, value){
+  document.execCommand(cmd, false, value || null);
+}
+
+function getSelectionBlockElement(){
+  const sel = window.getSelection();
+  if(!sel || sel.rangeCount === 0) return null;
+  let node = sel.getRangeAt(0).commonAncestorContainer;
+  if(node.nodeType === 3) node = node.parentNode;
+  while(node && node !== document.body){
+    const tag = (node.tagName||'').toLowerCase();
+    if(['p','div','pre','blockquote','li'].includes(tag)) return node;
+    node = node.parentNode;
+  }
+  return null;
+}
+
+function toggleBlock(tag){
+  const block = getSelectionBlockElement();
+  if(block && block.tagName && block.tagName.toLowerCase() === tag){
+    // снять формат: заменить на <p>
+    document.execCommand('formatBlock', false, 'p');
+  } else {
+    document.execCommand('formatBlock', false, tag);
+  }
+}
+
+function syncEditorsToTextareas(){
+  const fullEd = document.getElementById('full_description_editor');
+  const fullTa = document.getElementById('full_description');
+  if(fullEd && fullTa){ fullTa.value = fullEd.innerHTML; }
+
+  const comEd = document.getElementById('comment_editor');
+  const comTa = document.getElementById('comment');
+  if(comEd && comTa){
+    const html = comEd.innerHTML.trim();
+    // Если пусто (включая пустые теги), блокируем отправку
+    const text = comEd.innerText.replace(/\u200B/g,'').trim();
+    if(!text){
+      alert('Введите текст комментария');
+      return false;
+    }
+    comTa.value = html;
+  }
+  return true;
 }
 
 // Function to highlight dates based on proximity to today

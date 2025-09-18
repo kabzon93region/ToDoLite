@@ -46,9 +46,11 @@
         {% endif %}
     </div>
     
-    {% if task[7] %}
+    {% if task[7] or task[8] %}
     <div class="task-meta">
+        {% if task[7] %}
         <span>👤 {{ task[7] }}</span>
+        {% endif %}
         {% if task[8] %}
         <a href="{{ task[8].split(',')[0].strip() }}" target="_blank" class="btn btn-small btn-secondary">Тред</a>
         {% endif %}

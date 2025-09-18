@@ -6,6 +6,8 @@ import os
 import signal
 import sys
 from datetime import datetime
+import html
+import re as _re
 
 app = Flask(__name__)
 
@@ -244,6 +246,77 @@ def format_date_ru(value: str):
 # Регистрируем фильтр в Jinja
 app.jinja_env.filters['ru_date'] = format_date_ru
 
+
+# Безопасная очистка HTML: убираем опасные теги и атрибуты
+_ALLOWED_TAGS = {
+    'b','strong','i','em','u','s','strike','span','div','p','br','hr',
+    'ul','ol','li','blockquote','pre','code','a','h1','h2','h3','h4','h5','h6'
+}
+_ALLOWED_ATTRS = {
+    'a': {'href','title','target','rel'},
+    'span': {'style'},
+    'div': {'style'},
+    'p': {'style'},
+    'code': {'class'},
+    '*': {'style'}
+}
+
+_STYLE_WHITELIST = _re.compile(r"^(color|background-color|text-align|font-weight|font-style|text-decoration):", _re.I)
+
+def sanitize_html(raw: str) -> str:
+    if not raw:
+        return ''
+    # Убираем опасные теги целиком
+    cleaned = _re.sub(r"<(script|style)[\s\S]*?>[\s\S]*?<\/\1>", "", raw, flags=_re.I)
+    # Удаляем on* обработчики и javascript: ссылки
+    cleaned = _re.sub(r"\son\w+\s*=\s*\"[\s\S]*?\"", "", cleaned, flags=_re.I)
+    cleaned = _re.sub(r"\son\w+\s*=\s*'[^']*'", "", cleaned, flags=_re.I)
+    cleaned = _re.sub(r"\son\w+\s*=\s*[^\s>]+", "", cleaned, flags=_re.I)
+    cleaned = _re.sub(r"(href|src)\s*=\s*(['\"])javascript:[^\2]*\2", r"\1=\2#\2", cleaned, flags=_re.I)
+
+    # Разрешаем только whitelisted теги; остальные заменяем на текст
+    def _replace_tag(match):
+        groups = match.groups()
+        if len(groups) < 3:
+            return html.escape(match.group(0))
+        
+        closing = groups[0]
+        name = groups[1].lower()
+        attrs = groups[2] if len(groups) > 2 else ''
+        
+        if name not in _ALLOWED_TAGS:
+            # Экранируем весь тег
+            return html.escape(match.group(0))
+        
+        # Фильтруем атрибуты
+        allowed_for_tag = _ALLOWED_ATTRS.get(name, set()) | _ALLOWED_ATTRS.get('*', set())
+        def _attr_filter(attr_match):
+            attr_groups = attr_match.groups()
+            if len(attr_groups) < 3:
+                return ''
+            attr_name = attr_groups[0].lower()
+            quote = attr_groups[1]
+            val = attr_groups[2]
+            if attr_name not in allowed_for_tag:
+                return ''
+            if attr_name == 'style':
+                # Оставляем только разрешенные CSS свойства
+                safe_parts = []
+                for part in val.split(';'):
+                    p = part.strip()
+                    if p and _STYLE_WHITELIST.match(p):
+                        safe_parts.append(p)
+                val = '; '.join(safe_parts)
+            if attr_name == 'href' and val.strip().lower().startswith('javascript:'):
+                val = '#'
+            return f" {attr_name}={quote}{html.escape(val, quote=True)}{quote}"
+
+        safe_attrs = _re.sub(r"\s*(\w+)\s*=\s*([\"'])([\s\S]*?)\2", _attr_filter, attrs)
+        return f"<{closing}{name}{safe_attrs}>"
+
+    cleaned = _re.sub(r"<(\/?)([A-Za-z0-9]+)([^>]*)>", _replace_tag, cleaned)
+    return cleaned
+
 # Получить задачу по ID с комментариями
 def get_task_with_comments(task_id):
     conn = sqlite3.connect('tasks.db')
@@ -361,7 +434,7 @@ def view_task(task_id):
 def add_task_route():
     title = request.form['title']
     short_description = request.form.get('short_description', '')
-    full_description = request.form.get('full_description', '')
+    full_description = sanitize_html(request.form.get('full_description', ''))
     status = request.form.get('status', 'new')
     priority = request.form.get('priority', 'medium')
     eisenhower_priority = request.form.get('eisenhower_priority', 'not_urgent_not_important')
@@ -379,7 +452,7 @@ def add_task_route():
 def update_task_route(task_id):
     title = request.form['title']
     short_description = request.form.get('short_description', '')
-    full_description = request.form.get('full_description', '')
+    full_description = sanitize_html(request.form.get('full_description', ''))
     status = request.form.get('status', 'new')
     priority = request.form.get('priority', 'medium')
     eisenhower_priority = request.form.get('eisenhower_priority', 'not_urgent_not_important')
@@ -395,7 +468,7 @@ def update_task_route(task_id):
 
 @app.route('/add_comment/<int:task_id>', methods=['POST'])
 def add_comment_route(task_id):
-    comment = request.form['comment']
+    comment = sanitize_html(request.form['comment'])
     add_comment(task_id, comment)
     # После добавления комментария раскрываем блок редактирования
     return redirect(url_for('view_task', task_id=task_id, open_edit=1))
