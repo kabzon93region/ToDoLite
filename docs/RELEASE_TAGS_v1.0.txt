@@ -53,3 +53,11 @@ free
 no-ads
 privacy
 secure
+autocomplete
+tag-suggestions
+tag-chips
+tag-management
+favicon
+svg-icon
+site-icon
+browser-icon
