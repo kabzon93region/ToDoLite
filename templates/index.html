@@ -224,6 +224,68 @@
             float: right;
         }
 
+        /* Стили для контейнера тредов */
+        .threads-input-container {
+            position: relative;
+        }
+
+        .threads-input-wrapper {
+            position: relative;
+        }
+
+        .threads-display {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+            margin-bottom: 8px;
+            min-height: 20px;
+        }
+
+        .thread-tag {
+            background: #569cd6;
+            color: #1e1e1e;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 11px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            max-width: 200px;
+        }
+
+        .thread-tag .thread-url {
+            color: #1e1e1e;
+            text-decoration: none;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .thread-tag .remove-thread {
+            background: none;
+            border: none;
+            color: #1e1e1e;
+            cursor: pointer;
+            font-size: 12px;
+            padding: 0;
+            width: 16px;
+            height: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+        }
+
+        .thread-tag .remove-thread:hover {
+            background: rgba(30, 30, 30, 0.2);
+        }
+
+        .form-text {
+            color: #6c757d;
+            font-size: 11px;
+            margin-top: 4px;
+        }
+
         .mode-selector {
             display: flex;
             gap: 15px;
@@ -930,30 +992,15 @@
             </div>
             <div class="add-task-form" id="addTaskForm" style="display: none;">
             <form method="POST" action="/add_task">
+                <!-- Первая строка: Название задачи, Краткое описание, Приоритет Эйзенхауэра -->
                 <div class="form-grid">
-                <div class="form-group">
+                    <div class="form-group">
                         <label for="title">Название задачи *</label>
-                    <input type="text" id="title" name="title" required>
-                </div>
-                <div class="form-group">
-                        <label for="short_description">Краткое описание *</label>
-                        <input type="text" id="short_description" name="short_description" required>
-                </div>
-                <div class="form-group">
-                        <label for="status">Статус *</label>
-                        <select id="status" name="status" required>
-                            {% for status in cfg.statuses_order %}
-                            <option value="{{ status }}">{{ cfg.statuses_labels[status] if cfg.statuses_labels and status in cfg.statuses_labels else status }}</option>
-                            {% endfor %}
-                        </select>
+                        <input type="text" id="title" name="title" required>
                     </div>
                     <div class="form-group">
-                        <label for="priority">Приоритет *</label>
-                        <select id="priority" name="priority" required>
-                        <option value="low">Низкий</option>
-                        <option value="medium" selected>Средний</option>
-                        <option value="high">Высокий</option>
-                    </select>
+                        <label for="short_description">Краткое описание *</label>
+                        <input type="text" id="short_description" name="short_description" required>
                     </div>
                     <div class="form-group">
                         <label for="eisenhower_priority">Приоритет Эйзенхауэра *</label>
@@ -964,19 +1011,68 @@
                             <option value="not_urgent_not_important" selected>📋 Не важные не срочные</option>
                         </select>
                     </div>
+                </div>
+                
+                <!-- Вторая строка: Статус, Приоритет, Ответственный -->
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="status">Статус *</label>
+                        <select id="status" name="status" required>
+                            {% for status in cfg.statuses_order %}
+                            <option value="{{ status }}">{{ cfg.statuses_labels[status] if cfg.statuses_labels and status in cfg.statuses_labels else status }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="priority">Приоритет *</label>
+                        <select id="priority" name="priority" required>
+                            <option value="low">Низкий</option>
+                            <option value="medium" selected>Средний</option>
+                            <option value="high">Высокий</option>
+                        </select>
+                    </div>
                     <div class="form-group">
                         <label for="assigned_to">Ответственный</label>
                         <input type="text" id="assigned_to" name="assigned_to">
                     </div>
+                </div>
+                
+                <!-- Третья строка: Дата взятия в работу, Дата выполнения, Теги -->
+                <div class="form-grid">
                     <div class="form-group">
-                        <label for="scheduled_date">Дата отложения</label>
+                        <label for="scheduled_date">Дата взятия в работу</label>
                         <input type="date" id="scheduled_date" name="scheduled_date">
                     </div>
                     <div class="form-group">
-                        <label for="due_date">Срок выполнения</label>
+                        <label for="due_date">Дата выполнения</label>
                         <input type="date" id="due_date" name="due_date">
                     </div>
+                    <div class="form-group">
+                        <label for="tags">Теги</label>
+                        <div class="tags-input-container">
+                            <div class="tags-input-wrapper">
+                                <input type="text" id="tags" name="tags" placeholder="Введите теги..." style="display: none;">
+                                <div id="tagsDisplay" class="tags-display"></div>
+                                <input type="text" id="tagsInput" placeholder="Введите тег и нажмите Enter..." autocomplete="off">
+                            </div>
+                            <div class="tags-suggestions" id="tagsSuggestions"></div>
+                        </div>
+                    </div>
                 </div>
+                
+                <!-- Связанные треды (множественные ссылки) -->
+                <div class="form-group">
+                    <label for="related_threads">Связанные треды и ссылки</label>
+                    <div class="threads-input-container">
+                        <div class="threads-input-wrapper">
+                            <input type="text" id="related_threads" name="related_threads" placeholder="Введите ссылку и нажмите Enter..." autocomplete="off">
+                            <div id="threadsDisplay" class="threads-display"></div>
+                        </div>
+                        <small class="form-text">Можно добавить несколько ссылок: на треды, форумы, новости и т.д.</small>
+                    </div>
+                </div>
+                
+                <!-- Подробное описание -->
                 <div class="form-group">
                     <label for="full_description">Подробное описание</label>
                     <div class="rtf-toolbar">
@@ -993,21 +1089,7 @@
                     <div id="full_description_editor" class="rtf-editor" contenteditable="true" placeholder="Введите подробное описание задачи..."></div>
                     <textarea id="full_description" name="full_description" style="display:none;"></textarea>
                 </div>
-                <div class="form-group">
-                    <label for="related_threads">Связанные треды (ссылки через запятую)</label>
-                    <input type="text" id="related_threads" name="related_threads" placeholder="https://example.com/thread1, https://example.com/thread2">
-                </div>
-                <div class="form-group">
-                    <label for="tags">Теги</label>
-                    <div class="tags-input-container">
-                        <div class="tags-input-wrapper">
-                            <input type="text" id="tags" name="tags" placeholder="Введите теги..." style="display: none;">
-                            <div id="tagsDisplay" class="tags-display"></div>
-                            <input type="text" id="tagsInput" placeholder="Введите тег и нажмите Enter..." autocomplete="off">
-                        </div>
-                        <div class="tags-suggestions" id="tagsSuggestions"></div>
-                    </div>
-                </div>
+                
                 <button type="submit" class="btn">Добавить задачу</button>
             </form>
             </div>
@@ -1562,6 +1644,32 @@
             });
         }
 
+        // Инициализация поля тредов
+        function setupThreadsInput() {
+            const threadsInput = document.getElementById('related_threads');
+            if (!threadsInput) return;
+
+            // Загружаем существующие треды из скрытого поля
+            const existingThreads = threadsInput.value.trim();
+            if (existingThreads) {
+                const threads = existingThreads.split(',').filter(thread => thread.trim());
+                selectedThreadsForForm = threads.map(thread => thread.trim());
+                updateThreadsDisplay();
+            }
+
+            // Обработка нажатий клавиш
+            threadsInput.addEventListener('keydown', function(e) {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    addThreadFromInput();
+                } else if (e.key === 'Backspace' && this.value === '' && selectedThreadsForForm.length > 0) {
+                    // Удаляем последний тред при нажатии Backspace на пустом поле
+                    selectedThreadsForForm.pop();
+                    updateThreadsDisplay();
+                }
+            });
+        }
+
         function showTagSuggestions(query) {
             const suggestions = availableTagsForForms.filter(tag => 
                 tag.tag.toLowerCase().includes(query.toLowerCase()) && 
@@ -1645,6 +1753,51 @@
 
             // Обновляем скрытое поле
             hiddenTagsInput.value = selectedTagsForForm.map(tag => `#${tag}`).join(' ');
+        }
+
+        // Функции для работы с тредами
+        let selectedThreadsForForm = [];
+
+        function addThreadFromInput() {
+            const input = document.getElementById('related_threads');
+            const url = input.value.trim();
+            if (url && !selectedThreadsForForm.includes(url)) {
+                addThread(url);
+                input.value = '';
+            }
+        }
+
+        function addThread(url) {
+            if (!selectedThreadsForForm.includes(url)) {
+                selectedThreadsForForm.push(url);
+                updateThreadsDisplay();
+            }
+        }
+
+        function removeThread(url) {
+            const index = selectedThreadsForForm.indexOf(url);
+            if (index > -1) {
+                selectedThreadsForForm.splice(index, 1);
+                updateThreadsDisplay();
+            }
+        }
+
+        function updateThreadsDisplay() {
+            const display = document.getElementById('threadsDisplay');
+            const hiddenInput = document.getElementById('related_threads');
+            
+            display.innerHTML = '';
+            selectedThreadsForForm.forEach(url => {
+                const threadElement = document.createElement('span');
+                threadElement.className = 'thread-tag';
+                threadElement.innerHTML = `
+                    <a href="${url}" target="_blank" class="thread-url" title="${url}">${url.length > 30 ? url.substring(0, 30) + '...' : url}</a>
+                    <button type="button" onclick="removeThread('${url}')" class="remove-thread" title="Удалить">×</button>
+                `;
+                display.appendChild(threadElement);
+            });
+            
+            hiddenInput.value = selectedThreadsForForm.join(',');
         }
 
         // WYSIWYG Editor Functions
@@ -1796,6 +1949,7 @@
         document.addEventListener('DOMContentLoaded', function() {
             loadAvailableTagsForForms();
             setupTagsInput();
+            setupThreadsInput();
             setupScrollbarSync();
             
             // Добавляем обработчик для синхронизации WYSIWYG редактора
