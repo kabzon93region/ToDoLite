@@ -4,6 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Профессиональный Задачник</title>
+    <link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='favicon.svg') }}">
+    <link rel="shortcut icon" href="{{ url_for('static', filename='favicon.svg') }}">
+    <link rel="apple-touch-icon" href="{{ url_for('static', filename='favicon.svg') }}">
     <style>
         * {
             margin: 0;
@@ -105,6 +108,111 @@
             font-size: 14px;
             padding: 0;
             margin-left: 3px;
+        }
+
+        /* Стили для ввода тегов в формах */
+        .tags-input-container {
+            position: relative;
+            width: 100%;
+        }
+
+        .tags-input-wrapper {
+            border: 1px solid #3c3c3c;
+            border-radius: 4px;
+            padding: 8px;
+            background: #1e1e1e;
+            min-height: 40px;
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .tags-display {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 4px;
+            flex: 1;
+        }
+
+        .tags-display .tag-chip {
+            background: #007acc;
+            color: white;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 0.8em;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .tags-display .tag-remove {
+            background: none;
+            border: none;
+            color: white;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 12px;
+            padding: 0;
+            margin: 0;
+        }
+
+        .tags-display .tag-remove:hover {
+            color: #ff6b6b;
+        }
+
+        #tagsInput {
+            border: none;
+            background: transparent;
+            color: #e0e0e0;
+            outline: none;
+            flex: 1;
+            min-width: 120px;
+            padding: 0;
+        }
+
+        #tagsInput::placeholder {
+            color: #6c757d;
+        }
+
+        .tags-suggestions {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: #2d2d30;
+            border: 1px solid #3c3c3c;
+            border-top: none;
+            border-radius: 0 0 4px 4px;
+            max-height: 200px;
+            overflow-y: auto;
+            z-index: 1000;
+            display: none;
+        }
+
+        .tags-suggestions.show {
+            display: block;
+        }
+
+        .tag-suggestion {
+            padding: 8px 12px;
+            cursor: pointer;
+            color: #e0e0e0;
+            border-bottom: 1px solid #3c3c3c;
+        }
+
+        .tag-suggestion:hover {
+            background: #3c3c3c;
+        }
+
+        .tag-suggestion:last-child {
+            border-bottom: none;
+        }
+
+        .tag-suggestion .tag-count {
+            color: #6c757d;
+            font-size: 0.8em;
+            float: right;
         }
 
         .mode-selector {
@@ -666,8 +774,15 @@
                     <input type="text" id="related_threads" name="related_threads" placeholder="https://example.com/thread1, https://example.com/thread2">
                 </div>
                 <div class="form-group">
-                    <label for="tags">Теги (через пробел, с #)</label>
-                    <input type="text" id="tags" name="tags" placeholder="#backend #urgent">
+                    <label for="tags">Теги</label>
+                    <div class="tags-input-container">
+                        <div class="tags-input-wrapper">
+                            <input type="text" id="tags" name="tags" placeholder="Введите теги..." style="display: none;">
+                            <div id="tagsDisplay" class="tags-display"></div>
+                            <input type="text" id="tagsInput" placeholder="Введите тег и нажмите Enter..." autocomplete="off">
+                        </div>
+                        <div class="tags-suggestions" id="tagsSuggestions"></div>
+                    </div>
                 </div>
                 <button type="submit" class="btn">Добавить задачу</button>
                 </form>
@@ -1093,6 +1208,164 @@
                 });
             }
         }
+
+        // Система тегов для форм
+        let availableTagsForForms = [];
+        let selectedTagsForForm = [];
+
+        function loadAvailableTagsForForms() {
+            fetch('/api/tags')
+                .then(response => response.json())
+                .then(data => {
+                    availableTagsForForms = data.tags || [];
+                })
+                .catch(error => {
+                    console.error('Error loading tags for forms:', error);
+                    availableTagsForForms = [];
+                });
+        }
+
+        function setupTagsInput() {
+            const tagsInput = document.getElementById('tagsInput');
+            const tagsDisplay = document.getElementById('tagsDisplay');
+            const tagsSuggestions = document.getElementById('tagsSuggestions');
+            const hiddenTagsInput = document.getElementById('tags');
+
+            if (!tagsInput || !tagsDisplay || !tagsSuggestions || !hiddenTagsInput) {
+                console.error('Tags input elements not found');
+                return;
+            }
+
+            // Загружаем существующие теги из скрытого поля
+            const existingTags = hiddenTagsInput.value.trim();
+            if (existingTags) {
+                const tags = existingTags.split(/\s+/).filter(tag => tag.trim());
+                selectedTagsForForm = tags.map(tag => tag.startsWith('#') ? tag.substring(1) : tag);
+                updateTagsDisplay();
+            }
+
+            // Обработка ввода
+            tagsInput.addEventListener('input', function() {
+                const query = this.value.trim();
+                if (query.length > 0) {
+                    showTagSuggestions(query);
+                } else {
+                    hideTagSuggestions();
+                }
+            });
+
+            // Обработка нажатий клавиш
+            tagsInput.addEventListener('keydown', function(e) {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    addTagFromInput();
+                } else if (e.key === 'Escape') {
+                    hideTagSuggestions();
+                } else if (e.key === 'Backspace' && this.value === '' && selectedTagsForForm.length > 0) {
+                    // Удаляем последний тег при нажатии Backspace на пустом поле
+                    selectedTagsForForm.pop();
+                    updateTagsDisplay();
+                }
+            });
+
+            // Обработка клика вне поля
+            document.addEventListener('click', function(e) {
+                if (!e.target.closest('.tags-input-container')) {
+                    hideTagSuggestions();
+                }
+            });
+        }
+
+        function showTagSuggestions(query) {
+            const suggestions = availableTagsForForms.filter(tag => 
+                tag.tag.toLowerCase().includes(query.toLowerCase()) && 
+                !selectedTagsForForm.includes(tag.tag)
+            );
+
+            const suggestionsDiv = document.getElementById('tagsSuggestions');
+            suggestionsDiv.innerHTML = '';
+
+            if (suggestions.length > 0) {
+                suggestions.forEach(tag => {
+                    const div = document.createElement('div');
+                    div.className = 'tag-suggestion';
+                    div.innerHTML = `#${tag.tag} <span class="tag-count">(${tag.count})</span>`;
+                    div.addEventListener('click', () => {
+                        addTag(tag.tag);
+                        document.getElementById('tagsInput').value = '';
+                        hideTagSuggestions();
+                    });
+                    suggestionsDiv.appendChild(div);
+                });
+                suggestionsDiv.classList.add('show');
+            } else {
+                // Предложение добавить новый тег
+                const div = document.createElement('div');
+                div.className = 'tag-suggestion';
+                div.innerHTML = `Добавить "#${query}"`;
+                div.addEventListener('click', () => {
+                    addTag(query);
+                    document.getElementById('tagsInput').value = '';
+                    hideTagSuggestions();
+                });
+                suggestionsDiv.appendChild(div);
+                suggestionsDiv.classList.add('show');
+            }
+        }
+
+        function hideTagSuggestions() {
+            document.getElementById('tagsSuggestions').classList.remove('show');
+        }
+
+        function addTagFromInput() {
+            const input = document.getElementById('tagsInput');
+            const tag = input.value.trim();
+            if (tag && !selectedTagsForForm.includes(tag)) {
+                addTag(tag);
+                input.value = '';
+                hideTagSuggestions();
+            }
+        }
+
+        function addTag(tag) {
+            if (!selectedTagsForForm.includes(tag)) {
+                selectedTagsForForm.push(tag);
+                updateTagsDisplay();
+            }
+        }
+
+        function removeTag(tag) {
+            const index = selectedTagsForForm.indexOf(tag);
+            if (index > -1) {
+                selectedTagsForForm.splice(index, 1);
+                updateTagsDisplay();
+            }
+        }
+
+        function updateTagsDisplay() {
+            const tagsDisplay = document.getElementById('tagsDisplay');
+            const hiddenTagsInput = document.getElementById('tags');
+            
+            tagsDisplay.innerHTML = '';
+            selectedTagsForForm.forEach(tag => {
+                const chip = document.createElement('div');
+                chip.className = 'tag-chip';
+                chip.innerHTML = `
+                    #${tag}
+                    <button class="tag-remove" onclick="removeTag('${tag}')">×</button>
+                `;
+                tagsDisplay.appendChild(chip);
+            });
+
+            // Обновляем скрытое поле
+            hiddenTagsInput.value = selectedTagsForForm.map(tag => `#${tag}`).join(' ');
+        }
+
+        // Инициализация при загрузке страницы
+        document.addEventListener('DOMContentLoaded', function() {
+            loadAvailableTagsForForms();
+            setupTagsInput();
+        });
     </script>
 </body>
 </html>

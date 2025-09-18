@@ -1,13 +1,13 @@
 # 📝 ToDoLite - Профессиональный Задачник
 
-[![Version](https://img.shields.io/badge/version-1.0-stable-green.svg)](https://github.com/kabzon93region/ToDoLite/releases)
+[![Version](https://img.shields.io/badge/version-1.1-stable-green.svg)](https://github.com/kabzon93region/ToDoLite/releases)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 [![Python](https://img.shields.io/badge/python-3.6+-blue.svg)](https://python.org)
 [![Platform](https://img.shields.io/badge/platform-Windows-lightgrey.svg)](https://github.com/kabzon93region/ToDoLite)
 
 Профессиональный задачник на Python с веб-интерфейсом, который отлично работает даже на старом оборудовании. Поддерживает два режима отображения: матрицу Эйзенхауэра и канбан-доску.
 
-> **🎉 v1.0 Stable** - Полнофункциональная версия с WYSIWYG-редактором!
+> **🎉 v1.1 Stable** - Улучшенная версия с автокомплитом тегов и иконкой!
 
 ## ✨ Особенности
 

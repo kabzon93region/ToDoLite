@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32">
+  <!-- Фон -->
+  <rect width="32" height="32" fill="#1e1e1e" rx="4"/>
+  
+  <!-- Лист бумаги -->
+  <rect x="6" y="4" width="20" height="24" fill="#2d2d30" stroke="#3c3c3c" stroke-width="1" rx="2"/>
+  
+  <!-- Строки текста -->
+  <rect x="8" y="8" width="12" height="1.5" fill="#007acc" rx="0.5"/>
+  <rect x="8" y="11" width="16" height="1.5" fill="#569cd6" rx="0.5"/>
+  <rect x="8" y="14" width="10" height="1.5" fill="#569cd6" rx="0.5"/>
+  
+  <!-- Чекбокс -->
+  <rect x="8" y="18" width="3" height="3" fill="none" stroke="#007acc" stroke-width="1" rx="0.5"/>
+  <path d="M9.5 20.5 L10.5 21.5 L12.5 19.5" stroke="#007acc" stroke-width="1" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+  
+  <!-- Текст задачи -->
+  <rect x="13" y="18" width="8" height="1.5" fill="#e0e0e0" rx="0.5"/>
+  <rect x="13" y="20.5" width="6" height="1.5" fill="#6c757d" rx="0.5"/>
+  
+  <!-- Дополнительные элементы -->
+  <circle cx="24" cy="10" r="2" fill="#ff6b6b"/>
+  <circle cx="26" cy="22" r="1.5" fill="#ffd93d"/>
+</svg>

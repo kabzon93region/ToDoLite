@@ -468,7 +468,11 @@ def update_task_route(task_id):
 
 @app.route('/add_comment/<int:task_id>', methods=['POST'])
 def add_comment_route(task_id):
-    comment = sanitize_html(request.form['comment'])
+    comment = request.form.get('comment', '').strip()
+    if not comment:
+        return redirect(url_for('view_task', task_id=task_id, open_edit=1))
+    
+    comment = sanitize_html(comment)
     add_comment(task_id, comment)
     # После добавления комментария раскрываем блок редактирования
     return redirect(url_for('view_task', task_id=task_id, open_edit=1))
