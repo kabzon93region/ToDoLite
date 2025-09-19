@@ -21,10 +21,10 @@
 ## 🚀 Быстрый доступ
 
 ### Текущий релиз
-- **v1.1** - [Архив](ToDoLite_v1.1.zip) | [Заметки](RELEASE_NOTES_v1.1.md) | [GitHub](GITHUB_RELEASE_v1.1.md)
+- **v1.1** - [Заметки](RELEASE_NOTES_v1.1.md) | [GitHub](GITHUB_RELEASE_v1.1.md) | [Папка](ToDoLite_v1.1/)
 
 ### Предыдущие релизы
-- **v1.0** - [Архив](ToDoLite_v1.0.zip) | [Заметки](RELEASE_NOTES_v1.0.md) | [GitHub](GITHUB_RELEASE_v1.0.md)
+- **v1.0** - [Заметки](RELEASE_NOTES_v1.0.md) | [GitHub](GITHUB_RELEASE_v1.0.md) | [Папка](ToDoLite_v1.0/)
 
 ### Создание нового релиза
 1. Запустите `create_release_v1.1.cmd`

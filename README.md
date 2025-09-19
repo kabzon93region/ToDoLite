@@ -282,7 +282,7 @@ app.run(debug=False, host='0.0.0.0', port=5000)
 - ✅ **Безопасность** — XSS защита и валидация данных
 - ✅ **Обратная совместимость** — все существующие данные сохранены
 
-**Скачать:** [v1.1 Release](https://github.com/kabzon93region/ToDoLite/releases/tag/v1.1)
+**Скачать:** [v1.1 Release](https://github.com/kabzon93region/ToDoLite/releases/tag/v1.1) | [Папка релиза](docs/ToDoLite_v1.1/)
 
 ### v1.0 (Предыдущая версия) — Стабильная
 - ✅ **Темная тема** по всему приложению
@@ -295,7 +295,7 @@ app.run(debug=False, host='0.0.0.0', port=5000)
 - ✅ **Фильтрация по Эйзенхауэру** — корректная работа
 - ✅ **Режимы** — Канбан и Матрица Эйзенхауэра
 
-**Скачать:** [v1.0 Release](https://github.com/kabzon93region/ToDoLite/releases/tag/v1.0)
+**Скачать:** [v1.0 Release](https://github.com/kabzon93region/ToDoLite/releases/tag/v1.0) | [Папка релиза](docs/ToDoLite_v1.0/)
 
 ### v0.9 (Предыдущая версия) - Стабильная
 - ✅ Стабильная версия с исправленными ошибками
