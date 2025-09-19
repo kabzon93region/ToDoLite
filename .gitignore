@@ -3,6 +3,7 @@ ToDoLite_venv/
 venv/
 env/
 temp_update/
+temp_update
 
 # База данных
 tasks.db
