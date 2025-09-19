@@ -8,6 +8,7 @@ import sys
 from datetime import datetime
 import html
 import re as _re
+from logger import logger
 
 app = Flask(__name__)
 
@@ -17,7 +18,7 @@ server_running = True
 def signal_handler(signum, frame):
     """Обработчик сигналов для graceful shutdown"""
     global server_running
-    print(f"\nПолучен сигнал {signum}. Завершение работы...")
+    logger.warning(f"Получен сигнал {signum}. Завершение работы...", "SIGNAL")
     server_running = False
     sys.exit(0)
 
@@ -446,6 +447,9 @@ def get_task_with_comments(task_id):
 # Добавить новую задачу
 def add_task(title, short_description, full_description, status, priority, eisenhower_priority, 
              assigned_to, related_threads, scheduled_date, due_date, tags):
+    logger.task(f"Создание новой задачи: '{title[:30]}...'", "CREATE")
+    logger.database(f"Сохранение в БД: assigned_to='{assigned_to}', threads='{related_threads}'", "DB_WRITE")
+    
     conn = sqlite3.connect('tasks.db')
     c = conn.cursor()
     c.execute("""INSERT INTO tasks (title, short_description, full_description, status, priority, 
@@ -455,10 +459,15 @@ def add_task(title, short_description, full_description, status, priority, eisen
                assigned_to, related_threads, scheduled_date, due_date, tags))
     conn.commit()
     conn.close()
+    
+    logger.success(f"Задача успешно создана: '{title[:30]}...'", "CREATE")
 
 # Обновить задачу
 def update_task(task_id, title, short_description, full_description, status, priority, 
                 eisenhower_priority, assigned_to, related_threads, scheduled_date, due_date, tags):
+    logger.task(f"Обновление задачи ID {task_id}: '{title[:30]}...'", "UPDATE")
+    logger.database(f"Обновление в БД: status='{status}', threads='{related_threads}'", "DB_WRITE")
+    
     conn = sqlite3.connect('tasks.db')
     c = conn.cursor()
     # Если статус переводится в 'done', проставляем completed_at только один раз
@@ -489,6 +498,8 @@ def update_task(task_id, title, short_description, full_description, status, pri
     )
     conn.commit()
     conn.close()
+    
+    logger.success(f"Задача ID {task_id} успешно обновлена", "UPDATE")
 
 # Добавить комментарий к задаче
 def add_comment(task_id, comment):
@@ -509,20 +520,27 @@ def delete_task(task_id):
 @app.route('/')
 def index():
     mode = request.args.get('mode', 'kanban')
+    logger.http(f"Запрос главной страницы, режим: {mode}", "HTTP_GET")
     tasks = get_tasks_by_mode_with_comments(mode)
     cfg = load_config()
+    logger.info(f"Загружено {len(tasks)} задач для режима '{mode}'", "PAGE_LOAD")
     return render_template('index.html', tasks=tasks, current_mode=mode, cfg=cfg)
 
 @app.route('/task/<int:task_id>')
 def view_task(task_id):
+    logger.http(f"Запрос деталей задачи ID {task_id}", "HTTP_GET")
     task, comments = get_task_with_comments(task_id)
     if not task:
+        logger.error(f"Задача ID {task_id} не найдена", "TASK_NOT_FOUND")
         return "Задача не найдена", 404
     cfg = load_config()
+    logger.info(f"Загружены детали задачи ID {task_id}, комментариев: {len(comments)}", "TASK_VIEW")
     return render_template('task_detail.html', task=task, comments=comments, cfg=cfg)
 
 @app.route('/add_task', methods=['POST'])
 def add_task_route():
+    logger.http("Запрос создания новой задачи", "HTTP_POST")
+    
     title = request.form['title']
     short_description = request.form.get('short_description', '')
     full_description = sanitize_html(request.form.get('full_description', ''))
@@ -535,12 +553,20 @@ def add_task_route():
     scheduled_date = request.form.get('scheduled_date', '')
     due_date = request.form.get('due_date', '')
     
+    # Отладочная информация
+    logger.form(f"related_threads = '{related_threads}'", "FORM_DATA")
+    logger.form(f"assigned_to = '{assigned_to}'", "FORM_DATA")
+    logger.form(f"scheduled_date = '{scheduled_date}'", "FORM_DATA")
+    logger.form(f"due_date = '{due_date}'", "FORM_DATA")
+    
     add_task(title, short_description, full_description, status, priority, eisenhower_priority,
              assigned_to, related_threads, scheduled_date, due_date, tags)
     return redirect(url_for('index'))
 
 @app.route('/update_task/<int:task_id>', methods=['POST'])
 def update_task_route(task_id):
+    logger.http(f"Запрос обновления задачи ID {task_id}", "HTTP_POST")
+    
     title = request.form['title']
     short_description = request.form.get('short_description', '')
     full_description = sanitize_html(request.form.get('full_description', ''))
@@ -559,23 +585,33 @@ def update_task_route(task_id):
 
 @app.route('/add_comment/<int:task_id>', methods=['POST'])
 def add_comment_route(task_id):
+    logger.http(f"Запрос добавления комментария к задаче ID {task_id}", "HTTP_POST")
+    
     comment = request.form.get('comment', '').strip()
     if not comment:
+        logger.warning(f"Пустой комментарий для задачи ID {task_id}", "EMPTY_COMMENT")
         return redirect(url_for('view_task', task_id=task_id, open_edit=1))
     
     comment = sanitize_html(comment)
     add_comment(task_id, comment)
+    logger.success(f"Комментарий добавлен к задаче ID {task_id}", "COMMENT_ADD")
     # После добавления комментария раскрываем блок редактирования
     return redirect(url_for('view_task', task_id=task_id, open_edit=1))
 
 @app.route('/delete_task/<int:task_id>')
 def delete_task_route(task_id):
+    logger.http(f"Запрос удаления задачи ID {task_id}", "HTTP_GET")
+    logger.task(f"Удаление задачи ID {task_id}", "DELETE")
     delete_task(task_id)
+    logger.success(f"Задача ID {task_id} успешно удалена", "DELETE")
     return redirect(url_for('index'))
 
 @app.route('/mark_done/<int:task_id>')
 def mark_done_route(task_id):
     """Отметить задачу как выполненную"""
+    logger.http(f"Запрос отметки задачи ID {task_id} как выполненной", "HTTP_GET")
+    logger.task(f"Отметка задачи ID {task_id} как выполненной", "MARK_DONE")
+    
     conn = sqlite3.connect('tasks.db')
     c = conn.cursor()
     
@@ -590,17 +626,23 @@ def mark_done_route(task_id):
     conn.commit()
     conn.close()
     
+    logger.success(f"Задача ID {task_id} отмечена как выполненная", "MARK_DONE")
     return redirect(url_for('view_task', task_id=task_id))
 
 @app.route('/update_task_status', methods=['POST'])
 def update_task_status():
     """API endpoint для обновления статуса задачи через drag&drop"""
+    logger.http("API запрос обновления статуса задачи", "API_POST")
+    
     data = request.get_json()
     task_id = data.get('task_id')
     new_status = data.get('status')
     
     if not task_id or not new_status:
+        logger.error(f"Неверные данные API: task_id={task_id}, status={new_status}", "API_ERROR")
         return {'success': False, 'error': 'Missing task_id or status'}, 400
+    
+    logger.task(f"Обновление статуса задачи ID {task_id} на '{new_status}'", "STATUS_UPDATE")
     
     conn = sqlite3.connect('tasks.db')
     c = conn.cursor()
@@ -620,11 +662,14 @@ def update_task_status():
     conn.commit()
     conn.close()
     
+    logger.success(f"Статус задачи ID {task_id} обновлен на '{new_status}'", "STATUS_UPDATE")
     return {'success': True}
 
 @app.route('/api/tags')
 def get_tags():
     """API для получения всех тегов с количеством задач"""
+    logger.http("API запрос получения тегов", "API_GET")
+    
     conn = sqlite3.connect('tasks.db')
     c = conn.cursor()
     
@@ -656,6 +701,7 @@ def get_tags():
     # Сортируем по количеству, затем по алфавиту
     sorted_tags = sorted(tag_counts.items(), key=lambda x: (-x[1], x[0]))
     
+    logger.info(f"Возвращено {len(sorted_tags)} уникальных тегов", "API_TAGS")
     return {'tags': [{'tag': tag, 'count': count} for tag, count in sorted_tags]}
 
 @app.route('/test_api')
@@ -663,5 +709,9 @@ def test_api_page():
     return app.send_static_file('test_api.html')
 
 if __name__ == '__main__':
+    logger.info("Запуск ToDoLite приложения", "STARTUP")
+    logger.database("Инициализация базы данных", "DB_INIT")
     init_db()
+    logger.success("База данных инициализирована", "DB_INIT")
+    logger.http("Запуск Flask сервера на http://0.0.0.0:5000", "SERVER_START")
     app.run(debug=True, host='0.0.0.0', port=5000)

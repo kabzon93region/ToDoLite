@@ -9,6 +9,7 @@ from PIL import Image, ImageDraw
 import tkinter as tk
 from tkinter import scrolledtext
 import webbrowser
+from logger import logger
 
 class TaskManagerTray:
     def __init__(self):
@@ -277,9 +278,9 @@ if __name__ == "__main__":
         import pystray
         from PIL import Image
     except ImportError:
-        print("Установка необходимых библиотек...")
+        logger.warning("Установка необходимых библиотек...", "DEPENDENCIES")
         subprocess.check_call([sys.executable, "-m", "pip", "install", "pystray", "Pillow"])
-        print("Библиотеки установлены. Перезапустите приложение.")
+        logger.success("Библиотеки установлены. Перезапустите приложение.", "DEPENDENCIES")
         sys.exit(1)
     
     # Запускаем приложение

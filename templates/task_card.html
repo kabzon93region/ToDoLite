@@ -52,7 +52,13 @@
         <span>👤 {{ task[7] }}</span>
         {% endif %}
         {% if task[8] %}
-        <a href="{{ task[8].split(',')[0].strip() }}" target="_blank" class="btn btn-small btn-secondary">Тред</a>
+        {% set first_thread = task[8].split(',')[0].strip() %}
+        {% set thread_parts = first_thread.split(' - ') %}
+        {% if thread_parts|length >= 2 %}
+            <a href="{{ thread_parts[1:]|join(' - ') }}" target="_blank" class="btn btn-small btn-secondary">{{ thread_parts[0] }}</a>
+        {% else %}
+            <a href="{{ first_thread }}" target="_blank" class="btn btn-small btn-secondary">Тред</a>
+        {% endif %}
         {% endif %}
     </div>
     {% endif %}

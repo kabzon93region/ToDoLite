@@ -1,7 +1,7 @@
 @echo off
 chcp 65001 >nul
 echo ========================================
-echo         Запуск задачника
+echo         ToDoLite - Консольный запуск
 echo ========================================
 echo.
 
@@ -19,6 +19,8 @@ call ToDoLite_venv\Scripts\activate.bat
 echo.
 echo Запуск задачника...
 echo Откройте браузер и перейдите по адресу: http://localhost:5000
+echo.
+echo Для остановки нажмите Ctrl+C
 echo.
 python app.py
 pause

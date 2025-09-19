@@ -1,7 +1,7 @@
 @echo off
 chcp 65001 >nul
 echo ========================================
-echo    Запуск задачника с поддержкой трея
+echo    ToDoLite - Запуск в системном трее
 echo ========================================
 echo.
 
@@ -17,10 +17,11 @@ if not exist "ToDoLite_venv\Scripts\activate.bat" (
 call ToDoLite_venv\Scripts\activate.bat
 
 echo.
-echo Запуск задачника с поддержкой трея...
+echo Запуск задачника в системном трее...
 echo Иконка появится в системном трее (рядом с часами)
 echo.
 echo Программа запущена! Окно можно закрыть.
+echo Для управления используйте правую кнопку мыши на иконке в трее.
 echo.
 start "" python tray_app.py
 timeout /t 3 /nobreak >nul
