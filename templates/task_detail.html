@@ -1262,21 +1262,30 @@ document.addEventListener('DOMContentLoaded', function(){
   if (threadsContent) {
     const links = threadsContent.querySelectorAll('.thread-link');
     links.forEach((link, index) => {
-      const originalText = link.textContent;
-      const parts = originalText.split(' - ');
-      
-      if (parts.length >= 2) {
-        const name = parts[0].trim();
-        const url = parts.slice(1).join(' - ').trim();
-        link.innerHTML = `${name} - <a href="${url}" target="_blank" class="thread-url">${url}</a>`;
-      } else {
-        // Если нет разделителя, делаем весь текст ссылкой
-        link.innerHTML = `<a href="${originalText}" target="_blank" class="thread-url">${originalText}</a>`;
-      }
-      
-      // Добавляем запятую (кроме последней ссылки)
-      if (index < links.length - 1) {
-        link.innerHTML = link.innerHTML + ',';
+      try {
+        const originalText = link.textContent;
+        const parts = originalText.split(' - ');
+        
+        if (parts.length >= 2) {
+          const name = parts[0].trim();
+          const url = parts.slice(1).join(' - ').trim();
+          // Экранируем HTML символы
+          const escapedName = name.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+          const escapedUrl = url.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+          link.innerHTML = `${escapedName} - <a href="${escapedUrl}" target="_blank" class="thread-url">${escapedUrl}</a>`;
+        } else {
+          // Если нет разделителя, делаем весь текст ссылкой
+          const escapedText = originalText.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+          link.innerHTML = `<a href="${escapedText}" target="_blank" class="thread-url">${escapedText}</a>`;
+        }
+        
+        // Добавляем запятую (кроме последней ссылки)
+        if (index < links.length - 1) {
+          link.innerHTML = link.innerHTML + ',';
+        }
+      } catch (error) {
+        console.error('Ошибка при обработке ссылки:', error);
+        // Оставляем ссылку как есть в случае ошибки
       }
     });
   }
@@ -1486,14 +1495,24 @@ function updateThreadsDisplay() {
     
     display.innerHTML = '';
     selectedThreadsForForm.forEach(threadText => {
-        const parsed = parseThreadText(threadText);
-        const threadElement = document.createElement('span');
-        threadElement.className = 'thread-tag';
-        threadElement.innerHTML = `
-            <span class="thread-name">${parsed.name}</span> - <a href="${parsed.url}" target="_blank" class="thread-url" title="${parsed.url}">${parsed.url.length > 30 ? parsed.url.substring(0, 30) + '...' : parsed.url}</a>
-            <button type="button" onclick="removeThread('${threadText.replace(/'/g, "\\'")}')" class="remove-thread" title="Удалить">×</button>
-        `;
-        display.appendChild(threadElement);
+        try {
+            const parsed = parseThreadText(threadText);
+            const threadElement = document.createElement('span');
+            threadElement.className = 'thread-tag';
+            
+            // Экранируем HTML символы
+            const escapedName = parsed.name.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+            const escapedUrl = parsed.url.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+            const escapedThreadText = threadText.replace(/'/g, "\\'").replace(/"/g, '\\"');
+            
+            threadElement.innerHTML = `
+                <span class="thread-name">${escapedName}</span> - <a href="${escapedUrl}" target="_blank" class="thread-url" title="${escapedUrl}">${parsed.url.length > 30 ? parsed.url.substring(0, 30) + '...' : parsed.url}</a>
+                <button type="button" onclick="removeThread('${escapedThreadText}')" class="remove-thread" title="Удалить">×</button>
+            `;
+            display.appendChild(threadElement);
+        } catch (error) {
+            console.error('Ошибка при отображении треда:', error);
+        }
     });
     
     hiddenInput.value = selectedThreadsForForm.join(',');
