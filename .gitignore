@@ -1,14 +1,3 @@
-# Виртуальное окружение
-ToDoLite_venv/
-venv/
-env/
-temp_update/
-temp_update
-
-# База данных
-tasks.db
-*.db
-
 # Python
 __pycache__/
 *.py[cod]
@@ -30,16 +19,49 @@ wheels/
 *.egg-info/
 .installed.cfg
 *.egg
+MANIFEST
+
+# Virtual Environment
+ToDoLite_venv/
+venv/
+env/
+ENV/
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
 
 # IDE
 .vscode/
 .idea/
 *.swp
 *.swo
+*~
 
 # OS
 .DS_Store
 Thumbs.db
+desktop.ini
 
+# Logs
+*.log
+logs/
 
-.cursorignore
+# Temporary files
+*.tmp
+*.temp
+temp/
+tmp/
+
+# Release files (keep in docs/)
+ToDoLite_v*.zip
+ToDoLite_v*/
+RELEASE_*.md
+GITHUB_RELEASE_*.md
+RELEASE_TAGS_*.txt
+PUBLISH_INSTRUCTIONS_*.md
+create_release_*.cmd
+
+# Config files (if sensitive)
+config.json
