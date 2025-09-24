@@ -309,6 +309,20 @@
             border-color: #569cd6;
         }
 
+        .archive-btn {
+            background: #6c757d;
+            color: #d4d4d4;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .archive-btn:hover {
+            background: #5a6268;
+            color: #d4d4d4;
+        }
+
         .mode-btn:hover {
             background: rgba(86,156,214,0.15);
         }
@@ -502,6 +516,42 @@
         .rtf-editor li ol {
             padding-left: 1.4em;
             list-style-type: lower-alpha;
+        }
+
+        /* Стили для HTML таблиц в редакторе */
+        .rtf-editor table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 10px 0;
+            background: #2a2a2a;
+            border: 1px solid #444;
+            border-radius: 6px;
+            overflow: hidden;
+        }
+
+        .rtf-editor th {
+            background: #3a3a3a;
+            color: #fff;
+            padding: 8px 12px;
+            text-align: left;
+            font-weight: 600;
+            border-bottom: 2px solid #555;
+            font-size: 0.9em;
+        }
+
+        .rtf-editor td {
+            padding: 8px 12px;
+            color: #e0e0e0;
+            border-bottom: 1px solid #444;
+            font-size: 0.9em;
+        }
+
+        .rtf-editor tr:hover {
+            background: #333;
+        }
+
+        .rtf-editor tr:last-child td {
+            border-bottom: none;
         }
 
         .btn {
@@ -941,6 +991,16 @@
                 grid-template-columns: 1fr;
                 height: auto;
             }
+
+            /* Адаптивные стили для таблиц на мобильных */
+            .rtf-editor table {
+                font-size: 0.8em;
+            }
+
+            .rtf-editor th,
+            .rtf-editor td {
+                padding: 6px 8px;
+            }
         }
     </style>
 </head>
@@ -950,12 +1010,15 @@
             <div class="mode-selector">
                 <button class="mode-btn {{ 'active' if current_mode == 'kanban' else '' }}" 
                         onclick="switchMode('kanban')">
-                    📊 Канбан
+                    📊 Agile
                 </button>
                 <button class="mode-btn {{ 'active' if current_mode == 'eisenhower' else '' }}" 
                         onclick="switchMode('eisenhower')">
                     ⚡ Матрица Эйзенхауэра
                 </button>
+                <a href="/archive" class="mode-btn archive-btn">
+                    📦 Архив
+                </a>
             </div>
             <div class="filters">
                 <input type="text" id="searchFilter" class="filter-search" placeholder="🔍 Поиск по тексту...">
@@ -1081,6 +1144,7 @@
                         <button type="button" onclick="exec('underline')"><u>Ч</u></button>
                         <button type="button" onclick="exec('insertUnorderedList')">• Список</button>
                         <button type="button" onclick="exec('insertOrderedList')">1. Нумерованный</button>
+                        <button type="button" onclick="insertTable()">📊 Таблица</button>
                         <button type="button" onclick="toggleBlock('blockquote')">❝ Цитата</button>
                         <button type="button" onclick="toggleBlock('pre')">{'{ }'} Код</button>
                         <button type="button" onclick="exec('insertHorizontalRule')">— Разделитель</button>
@@ -1832,6 +1896,36 @@
                 document.execCommand('formatBlock', false, tagName);
             }
             document.getElementById('full_description_editor').focus();
+        }
+
+        function insertTable() {
+            const rows = prompt('Количество строк:', '3');
+            const cols = prompt('Количество столбцов:', '3');
+            
+            if (rows && cols && !isNaN(rows) && !isNaN(cols) && rows > 0 && cols > 0) {
+                let tableHTML = '<table><tbody>';
+                
+                // Создаем заголовки
+                tableHTML += '<tr>';
+                for (let i = 0; i < cols; i++) {
+                    tableHTML += '<th>Заголовок ' + (i + 1) + '</th>';
+                }
+                tableHTML += '</tr>';
+                
+                // Создаем строки данных
+                for (let i = 0; i < rows - 1; i++) {
+                    tableHTML += '<tr>';
+                    for (let j = 0; j < cols; j++) {
+                        tableHTML += '<td>Ячейка ' + (i + 1) + ',' + (j + 1) + '</td>';
+                    }
+                    tableHTML += '</tr>';
+                }
+                
+                tableHTML += '</tbody></table>';
+                
+                document.execCommand('insertHTML', false, tableHTML);
+                document.getElementById('full_description_editor').focus();
+            }
         }
 
         function syncEditorsToTextareas() {

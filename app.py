@@ -77,7 +77,10 @@ def init_db():
                       tags TEXT,
                       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                       updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                      completed_at TIMESTAMP)''')
+                      completed_at TIMESTAMP,
+                      archived BOOLEAN DEFAULT 0,
+                      archived_at TIMESTAMP,
+                      archived_from_status TEXT)''')
     
     # Создаем таблицу комментариев
     c.execute('''CREATE TABLE IF NOT EXISTS task_comments
@@ -87,14 +90,33 @@ def init_db():
                   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                   FOREIGN KEY (task_id) REFERENCES tasks (id) ON DELETE CASCADE)''')
     
+    # Проверяем и добавляем новые поля для архивирования
+    try:
+        c.execute("ALTER TABLE tasks ADD COLUMN archived BOOLEAN DEFAULT 0")
+        logger.database("Добавлено поле archived в таблицу tasks", "MIGRATION")
+    except sqlite3.OperationalError:
+        pass  # Поле уже существует
+    
+    try:
+        c.execute("ALTER TABLE tasks ADD COLUMN archived_at TIMESTAMP")
+        logger.database("Добавлено поле archived_at в таблицу tasks", "MIGRATION")
+    except sqlite3.OperationalError:
+        pass  # Поле уже существует
+    
+    try:
+        c.execute("ALTER TABLE tasks ADD COLUMN archived_from_status TEXT")
+        logger.database("Добавлено поле archived_from_status в таблицу tasks", "MIGRATION")
+    except sqlite3.OperationalError:
+        pass  # Поле уже существует
+    
     conn.commit()
     conn.close()
 
-# Получить все задачи
+# Получить все задачи (исключая архивированные)
 def get_tasks():
     conn = sqlite3.connect('tasks.db')
     c = conn.cursor()
-    c.execute("SELECT * FROM tasks ORDER BY created_at DESC")
+    c.execute("SELECT * FROM tasks WHERE archived = 0 OR archived IS NULL ORDER BY created_at DESC")
     tasks = c.fetchall()
     conn.close()
     return tasks
@@ -124,6 +146,7 @@ def get_tasks_by_mode(mode):
                 completed_at,
                 tags
             FROM tasks
+            WHERE archived = 0 OR archived IS NULL
             ORDER BY 
                 CASE priority WHEN 'high' THEN 1 WHEN 'medium' THEN 2 ELSE 3 END,
                 COALESCE(due_date, '') ASC
@@ -147,6 +170,7 @@ def get_tasks_by_mode(mode):
                 completed_at,
                 tags
             FROM tasks
+            WHERE archived = 0 OR archived IS NULL
             ORDER BY 
                 CASE priority WHEN 'high' THEN 1 WHEN 'medium' THEN 2 ELSE 3 END,
                 COALESCE(due_date, '') ASC
@@ -202,6 +226,7 @@ def get_tasks_by_mode_with_comments(mode):
                 completed_at,
                 tags
             FROM tasks
+            WHERE archived = 0 OR archived IS NULL
             ORDER BY 
                 CASE priority WHEN 'high' THEN 1 WHEN 'medium' THEN 2 ELSE 3 END,
                 COALESCE(due_date, '') ASC
@@ -225,6 +250,7 @@ def get_tasks_by_mode_with_comments(mode):
                 completed_at,
                 tags
             FROM tasks
+            WHERE archived = 0 OR archived IS NULL
             ORDER BY 
                 CASE priority WHEN 'high' THEN 1 WHEN 'medium' THEN 2 ELSE 3 END,
                 COALESCE(due_date, '') ASC
@@ -342,7 +368,8 @@ app.jinja_env.filters['ru_date'] = format_date_ru
 # Безопасная очистка HTML: убираем опасные теги и атрибуты
 _ALLOWED_TAGS = {
     'b','strong','i','em','u','s','strike','span','div','p','br','hr',
-    'ul','ol','li','blockquote','pre','code','a','h1','h2','h3','h4','h5','h6'
+    'ul','ol','li','blockquote','pre','code','a','h1','h2','h3','h4','h5','h6',
+    'table','tr','td','th','tbody','thead','tfoot','colgroup','col'
 }
 _ALLOWED_ATTRS = {
     'a': {'href','title','target','rel'},
@@ -350,10 +377,19 @@ _ALLOWED_ATTRS = {
     'div': {'style'},
     'p': {'style'},
     'code': {'class'},
+    'table': {'style','border','cellpadding','cellspacing','width'},
+    'tr': {'style','height'},
+    'td': {'style','width','height','colspan','rowspan','class'},
+    'th': {'style','width','height','colspan','rowspan','class'},
+    'tbody': {'style'},
+    'thead': {'style'},
+    'tfoot': {'style'},
+    'colgroup': {'style'},
+    'col': {'style','width'},
     '*': {'style'}
 }
 
-_STYLE_WHITELIST = _re.compile(r"^(color|background-color|text-align|font-weight|font-style|text-decoration):", _re.I)
+_STYLE_WHITELIST = _re.compile(r"^(color|background-color|text-align|font-weight|font-style|text-decoration|border|border-collapse|width|height|padding|margin):", _re.I)
 
 def sanitize_html(raw: str) -> str:
     if not raw:
@@ -431,7 +467,10 @@ def get_task_with_comments(task_id):
             created_at,
             updated_at,
             completed_at,
-            tags
+            tags,
+            archived,
+            archived_at,
+            archived_from_status
         FROM tasks WHERE id = ?
     """, (task_id,))
     task = c.fetchone()
@@ -517,6 +556,74 @@ def delete_task(task_id):
     conn.commit()
     conn.close()
 
+# Архивировать задачу
+def archive_task(task_id):
+    conn = sqlite3.connect('tasks.db')
+    c = conn.cursor()
+    
+    # Получаем текущий статус задачи
+    c.execute("SELECT status FROM tasks WHERE id = ?", (task_id,))
+    result = c.fetchone()
+    if not result:
+        conn.close()
+        return False
+    
+    current_status = result[0]
+    
+    # Архивируем задачу
+    c.execute("""
+        UPDATE tasks 
+        SET archived = 1, 
+            archived_at = CURRENT_TIMESTAMP,
+            archived_from_status = ?
+        WHERE id = ?
+    """, (current_status, task_id))
+    
+    conn.commit()
+    conn.close()
+    return True
+
+# Восстановить задачу из архива
+def restore_task(task_id):
+    conn = sqlite3.connect('tasks.db')
+    c = conn.cursor()
+    
+    # Получаем статус, из которого была архивирована задача
+    c.execute("SELECT archived_from_status FROM tasks WHERE id = ? AND archived = 1", (task_id,))
+    result = c.fetchone()
+    if not result:
+        conn.close()
+        return False
+    
+    original_status = result[0]
+    
+    # Восстанавливаем задачу
+    c.execute("""
+        UPDATE tasks 
+        SET archived = 0, 
+            archived_at = NULL,
+            archived_from_status = NULL,
+            status = ?
+        WHERE id = ?
+    """, (original_status, task_id))
+    
+    conn.commit()
+    conn.close()
+    return True
+
+# Получить архивированные задачи
+def get_archived_tasks():
+    conn = sqlite3.connect('tasks.db')
+    c = conn.cursor()
+    c.execute("""
+        SELECT * FROM tasks 
+        WHERE archived = 1 
+        ORDER BY archived_at DESC
+    """)
+    tasks = c.fetchall()
+    conn.close()
+    return tasks
+
 @app.route('/')
 def index():
     mode = request.args.get('mode', 'kanban')
@@ -536,6 +643,14 @@ def view_task(task_id):
     cfg = load_config()
     logger.info(f"Загружены детали задачи ID {task_id}, комментариев: {len(comments)}", "TASK_VIEW")
     return render_template('task_detail.html', task=task, comments=comments, cfg=cfg)
+
+@app.route('/archive')
+def archive():
+    logger.http("Запрос страницы архива", "HTTP_GET")
+    tasks = get_archived_tasks()
+    cfg = load_config()
+    logger.info(f"Загружено {len(tasks)} архивированных задач", "ARCHIVE_VIEW")
+    return render_template('archive.html', tasks=tasks, cfg=cfg)
 
 @app.route('/add_task', methods=['POST'])
 def add_task_route():
@@ -605,6 +720,26 @@ def delete_task_route(task_id):
     delete_task(task_id)
     logger.success(f"Задача ID {task_id} успешно удалена", "DELETE")
     return redirect(url_for('index'))
+
+@app.route('/archive_task/<int:task_id>')
+def archive_task_route(task_id):
+    logger.http(f"Запрос архивирования задачи ID {task_id}", "HTTP_GET")
+    logger.task(f"Архивирование задачи ID {task_id}", "ARCHIVE")
+    if archive_task(task_id):
+        logger.success(f"Задача ID {task_id} успешно архивирована", "ARCHIVE")
+    else:
+        logger.error(f"Ошибка архивирования задачи ID {task_id}", "ARCHIVE")
+    return redirect(url_for('index'))
+
+@app.route('/restore_task/<int:task_id>')
+def restore_task_route(task_id):
+    logger.http(f"Запрос восстановления задачи ID {task_id}", "HTTP_GET")
+    logger.task(f"Восстановление задачи ID {task_id}", "RESTORE")
+    if restore_task(task_id):
+        logger.success(f"Задача ID {task_id} успешно восстановлена", "RESTORE")
+    else:
+        logger.error(f"Ошибка восстановления задачи ID {task_id}", "RESTORE")
+    return redirect(url_for('archive'))
 
 @app.route('/mark_done/<int:task_id>')
 def mark_done_route(task_id):

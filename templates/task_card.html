@@ -65,6 +65,10 @@
     
     <div class="task-actions">
         <a href="/task/{{ task[0] }}" class="btn btn-small btn-primary">Открыть</a>
+        {% if task[4] == 'done' or task[4] == 'cancelled' %}
+        <a href="/archive_task/{{ task[0] }}" class="btn btn-small btn-secondary" 
+           onclick="return confirm('Архивировать задачу?')">📦 Архивировать</a>
+        {% endif %}
         {% if task[14] %}
         <div class="task-tags">
             {% set tags_text = task[14][:21] %}
