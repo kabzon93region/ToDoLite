@@ -7,6 +7,7 @@
     <link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='favicon.svg') }}">
     <link rel="shortcut icon" href="{{ url_for('static', filename='favicon.svg') }}">
     <link rel="apple-touch-icon" href="{{ url_for('static', filename='favicon.svg') }}">
+    
     <style>
         * {
             margin: 0;
@@ -323,6 +324,24 @@
             color: #d4d4d4;
         }
 
+        .migration-btn {
+            background: #28a745;
+            color: #d4d4d4;
+            border-color: #28a745;
+        }
+
+        .migration-btn:hover {
+            background: #218838;
+            color: #d4d4d4;
+        }
+
+        .migration-btn:disabled {
+            background: #6c757d;
+            border-color: #6c757d;
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
         .mode-btn:hover {
             background: rgba(86,156,214,0.15);
         }
@@ -416,142 +435,156 @@
             background: #252526;
         }
 
-        /* WYSIWYG Editor Styles */
-        .rtf-toolbar {
+        /* Markdown редактор */
+        .markdown-toolbar {
             display: flex;
+            gap: 6px;
             flex-wrap: wrap;
-            gap: 4px;
+            margin-bottom: 8px;
             padding: 8px;
             background: #2d2d30;
             border: 1px solid #3c3c3c;
-            border-bottom: none;
-            border-radius: 6px 6px 0 0;
+            border-radius: 4px;
         }
-
-        .rtf-toolbar button {
-            background: #1e1e1e;
+        
+        .markdown-toolbar button {
+            background: #3c3c3c;
             color: #d4d4d4;
-            border: 1px solid #3c3c3c;
-            padding: 4px 8px;
+            border: 1px solid #555;
+            padding: 6px 8px;
             border-radius: 4px;
             cursor: pointer;
             font-size: 12px;
+            min-width: 32px;
             transition: all 0.2s;
         }
-
-        .rtf-toolbar button:hover {
-            background: #3c3c3c;
-            border-color: #569cd6;
+        
+        .markdown-toolbar button:hover {
+            background: #4c4c4c;
+            border-color: #666;
         }
-
-        .rtf-toolbar button.active {
-            background: #569cd6;
-            color: #1e1e1e;
+        
+        .markdown-toolbar button:active {
+            background: #555;
         }
-
-        .rtf-editor {
-            min-height: 100px;
-            padding: 12px;
+        
+        .markdown-editor-container {
+            position: relative;
+        }
+        
+        .markdown-editor-container textarea {
+            width: 100%;
+            min-height: 120px;
+            padding: 10px;
+            border: 1px solid #3c3c3c;
+            border-radius: 4px;
             background: #1e1e1e;
             color: #d4d4d4;
-            border: 1px solid #3c3c3c;
-            border-radius: 0 0 6px 6px;
+            font-family: 'Consolas', 'Monaco', monospace;
+            font-size: 13px;
+            line-height: 1.4;
             outline: none;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            resize: vertical;
+        }
+        
+        .markdown-editor-container textarea:focus {
+            border-color: #007bff;
+            box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
+        }
+        
+        .markdown-preview {
+            min-height: 120px;
+            padding: 10px;
+            border: 1px solid #3c3c3c;
+            border-radius: 4px;
+            background: #1e1e1e;
+            color: #d4d4d4;
             font-size: 13px;
             line-height: 1.5;
+            overflow-y: auto;
         }
-
-        .rtf-editor:focus {
-            border-color: #569cd6;
-            background: #252526;
+        
+        .markdown-preview h1, .markdown-preview h2, .markdown-preview h3,
+        .markdown-preview h4, .markdown-preview h5, .markdown-preview h6 {
+            color: #569cd6;
+            margin: 16px 0 8px 0;
         }
-
-        .rtf-editor pre {
-            background: #111;
-            border: 1px solid #333;
-            padding: 8px 10px;
-            border-radius: 6px;
-            overflow-x: auto;
-            white-space: pre;
+        
+        .markdown-preview h1 { font-size: 1.5em; }
+        .markdown-preview h2 { font-size: 1.3em; }
+        .markdown-preview h3 { font-size: 1.1em; }
+        
+        .markdown-preview p {
+            margin: 8px 0;
         }
-
-        .rtf-editor code {
-            background: #111;
-            border: 1px solid #333;
-            padding: 2px 4px;
-            border-radius: 4px;
+        
+        .markdown-preview ul, .markdown-preview ol {
+            margin: 8px 0;
+            padding-left: 20px;
         }
-
-        .rtf-editor blockquote {
-            border-left: 3px solid #569cd6;
+        
+        .markdown-preview li {
+            margin: 4px 0;
+        }
+        
+        .markdown-preview blockquote {
             margin: 8px 0;
             padding: 8px 12px;
-            color: #c5c5c5;
-            background: #262626;
-            border-radius: 4px;
-        }
-        
-        /* Стили для списков в WYSIWYG редакторе */
-        .rtf-editor ol {
-            margin: 8px 0 8px 0;
-            padding-left: 1.2em;
-            list-style-type: decimal;
-            list-style-position: outside;
-        }
-        
-        .rtf-editor ul {
-            margin: 8px 0 8px 0;
-            padding-left: 1.8em;
-            list-style-type: disc;
-            list-style-position: outside;
-        }
-        
-        /* Вложенные списки в редакторе */
-        .rtf-editor li ul {
-            padding-left: 1.6em;
-            list-style-type: circle;
-        }
-        
-        .rtf-editor li ol {
-            padding-left: 1.4em;
-            list-style-type: lower-alpha;
-        }
-
-        /* Стили для HTML таблиц в редакторе */
-        .rtf-editor table {
-            width: 100%;
-            border-collapse: collapse;
-            margin: 10px 0;
             background: #2a2a2a;
-            border: 1px solid #444;
-            border-radius: 6px;
-            overflow: hidden;
+            border-left: 3px solid #569cd6;
+            color: #b0b0b0;
         }
-
-        .rtf-editor th {
-            background: #3a3a3a;
-            color: #fff;
-            padding: 8px 12px;
+        
+        .markdown-preview code {
+            background: #2a2a2a;
+            padding: 2px 4px;
+            border-radius: 3px;
+            font-family: 'Consolas', 'Monaco', monospace;
+        }
+        
+        .markdown-preview pre {
+            background: #2a2a2a;
+            padding: 10px;
+            border-radius: 4px;
+            overflow-x: auto;
+        }
+        
+        .markdown-preview pre code {
+            background: transparent;
+            padding: 0;
+        }
+        
+        .markdown-preview a {
+            color: #6cb5ec;
+            text-decoration: none;
+        }
+        
+        .markdown-preview a:hover {
+            text-decoration: underline;
+        }
+        
+        .markdown-preview table {
+            border-collapse: collapse;
+            width: 100%;
+            margin: 8px 0;
+        }
+        
+        .markdown-preview table th,
+        .markdown-preview table td {
+            border: 1px solid #3c3c3c;
+            padding: 6px 8px;
             text-align: left;
-            font-weight: 600;
-            border-bottom: 2px solid #555;
-            font-size: 0.9em;
         }
-
-        .rtf-editor td {
-            padding: 8px 12px;
-            color: #e0e0e0;
-            border-bottom: 1px solid #444;
-            font-size: 0.9em;
+        
+        .markdown-preview table th {
+            background: #2a2a2a;
+            font-weight: bold;
         }
-
-        .rtf-editor tr:hover {
-            background: #333;
-        }
-
-        .rtf-editor tr:last-child td {
-            border-bottom: none;
+        
+        .markdown-preview hr {
+            border: none;
+            border-top: 1px solid #3c3c3c;
+            margin: 16px 0;
         }
 
         .btn {
@@ -992,15 +1025,6 @@
                 height: auto;
             }
 
-            /* Адаптивные стили для таблиц на мобильных */
-            .rtf-editor table {
-                font-size: 0.8em;
-            }
-
-            .rtf-editor th,
-            .rtf-editor td {
-                padding: 6px 8px;
-            }
         }
     </style>
 </head>
@@ -1009,16 +1033,11 @@
         <div class="header">
             <div class="mode-selector">
                 <button class="mode-btn {{ 'active' if current_mode == 'kanban' else '' }}" 
-                        onclick="switchMode('kanban')">
-                    📊 Agile
-                </button>
+                        onclick="switchMode('kanban')">📊 Agile</button>
                 <button class="mode-btn {{ 'active' if current_mode == 'eisenhower' else '' }}" 
-                        onclick="switchMode('eisenhower')">
-                    ⚡ Матрица Эйзенхауэра
-                </button>
-                <a href="/archive" class="mode-btn archive-btn">
-                    📦 Архив
-                </a>
+                        onclick="switchMode('eisenhower')">⚡ Матрица Эйзенхауэра</button>
+                <a href="/archive" class="mode-btn archive-btn">📦 Архив</a>
+                <button class="mode-btn migration-btn" onclick="runMigration()" title="Обновить категории задач по датам">🔄 Обновить</button>
             </div>
             <div class="filters">
                 <input type="text" id="searchFilter" class="filter-search" placeholder="🔍 Поиск по тексту...">
@@ -1055,6 +1074,7 @@
             </div>
             <div class="add-task-form" id="addTaskForm" style="display: none;">
             <form method="POST" action="/add_task">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
                 <!-- Первая строка: Название задачи, Краткое описание, Приоритет Эйзенхауэра -->
                 <div class="form-grid">
                 <div class="form-group">
@@ -1100,7 +1120,7 @@
                     </div>
                 </div>
                 
-                <!-- Третья строка: Дата взятия в работу, Дата выполнения, Теги -->
+                <!-- Третья строка: Дата взятия в работу, Дата выполнения, Напоминание -->
                 <div class="form-grid">
                     <div class="form-group">
                         <label for="scheduled_date">Дата взятия в работу</label>
@@ -1109,6 +1129,25 @@
                     <div class="form-group">
                         <label for="due_date">Дата выполнения</label>
                         <input type="date" id="due_date" name="due_date">
+                    </div>
+                    <div class="form-group">
+                        <label for="reminder_time">Напоминание</label>
+                        <input type="datetime-local" id="reminder_time" name="reminder_time">
+                        <small class="form-text text-muted">Установите точное время, когда хотите получить напоминание о задаче</small>
+                    </div>
+                </div>
+                
+                <!-- Четвертая строка: Связанные треды и ссылки, Теги -->
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="related_threads">Связанные треды и ссылки</label>
+                        <div class="threads-input-container">
+                            <div class="threads-input-wrapper">
+                                <input type="text" id="related_threads" name="related_threads" placeholder="Введите ссылку и нажмите Enter..." autocomplete="off">
+                                <div id="threadsDisplay" class="threads-display"></div>
+                            </div>
+                            <small class="form-text">Можно добавить несколько ссылок: на треды, форумы, новости и т.д.</small>
+                        </div>
                     </div>
                     <div class="form-group">
                         <label for="tags">Теги</label>
@@ -1123,38 +1162,30 @@
                     </div>
                 </div>
                 
-                <!-- Связанные треды (множественные ссылки) -->
-                <div class="form-group">
-                    <label for="related_threads">Связанные треды и ссылки</label>
-                    <div class="threads-input-container">
-                        <div class="threads-input-wrapper">
-                            <input type="text" id="related_threads" name="related_threads" placeholder="Введите ссылку и нажмите Enter..." autocomplete="off">
-                            <div id="threadsDisplay" class="threads-display"></div>
-                        </div>
-                        <small class="form-text">Можно добавить несколько ссылок: на треды, форумы, новости и т.д.</small>
-                    </div>
-                </div>
-                
                 <!-- Подробное описание -->
                 <div class="form-group">
-                    <label for="full_description">Подробное описание</label>
-                    <div class="rtf-toolbar">
-                        <button type="button" onclick="exec('bold')"><b>Ж</b></button>
-                        <button type="button" onclick="exec('italic')"><i>К</i></button>
-                        <button type="button" onclick="exec('underline')"><u>Ч</u></button>
-                        <button type="button" onclick="exec('insertUnorderedList')">• Список</button>
-                        <button type="button" onclick="exec('insertOrderedList')">1. Нумерованный</button>
-                        <button type="button" onclick="insertTable()">📊 Таблица</button>
-                        <button type="button" onclick="toggleBlock('blockquote')">❝ Цитата</button>
-                        <button type="button" onclick="toggleBlock('pre')">{'{ }'} Код</button>
-                        <button type="button" onclick="exec('insertHorizontalRule')">— Разделитель</button>
-                        <button type="button" onclick="var url=prompt('Ссылка:','https://'); if(url) exec('createLink',url);">🔗 Ссылка</button>
+                    <label for="full_description">Подробное описание (Markdown)</label>
+                    <div class="markdown-toolbar">
+                        <button type="button" onclick="return toggleInline('full_description','**','**')" title="Жирный текст"><b>B</b></button>
+                        <button type="button" onclick="return toggleInline('full_description','*','*')" title="Курсив"><i>I</i></button>
+                        <button type="button" onclick="return toggleInline('full_description','~~','~~')" title="Зачёркнутый текст"><s>S</s></button>
+                        <button type="button" onclick="return toggleInline('full_description','`','`')" title="Код"><code>C</code></button>
+                        <button type="button" onclick="return toggleLinePrefix('full_description','## ')" title="Заголовок">H2</button>
+                        <button type="button" onclick="return toggleLinePrefix('full_description','- ')" title="Список">•</button>
+                        <button type="button" onclick="return toggleLinePrefix('full_description','1. ')" title="Нумерованный список">1.</button>
+                        <button type="button" onclick="return toggleLinePrefix('full_description','> ')" title="Цитата">"</button>
+                        <button type="button" onclick="return toggleFence('full_description','```')" title="Блок кода">{ }</button>
+                        <button type="button" onclick="insertMarkdownDescription('[', '](url)')" title="Ссылка">🔗</button>
+                        <button type="button" onclick="insertMarkdownDescription('---', '')" title="Разделитель">—</button>
+                        <button type="button" onclick="toggleDescriptionPreview()" title="Предпросмотр">👁</button>
                     </div>
-                    <div id="full_description_editor" class="rtf-editor" contenteditable="true" placeholder="Введите подробное описание задачи..."></div>
-                    <textarea id="full_description" name="full_description" style="display:none;"></textarea>
+                    <div class="markdown-editor-container">
+                        <textarea id="full_description" name="full_description" rows="6" placeholder="Введите подробное описание в формате Markdown..."></textarea>
+                        <div id="full_description_preview" class="markdown-preview" style="display:none;"></div>
+                    </div>
                 </div>
                 
-                <button type="submit" class="btn">Добавить задачу</button>
+                <button type="submit" class="btn">➕ Добавить задачу</button>
             </form>
             </div>
         </div>
@@ -1215,6 +1246,23 @@
     </div>
 
     <script>
+        // Функция для получения CSRF токена
+        function getCSRFToken() {
+            // Пытаемся получить токен из скрытого поля формы
+            const tokenInput = document.querySelector('input[name="csrf_token"]');
+            if (tokenInput) {
+                return tokenInput.value;
+            }
+            // Или из cookie
+            const cookies = document.cookie.split(';');
+            for (let cookie of cookies) {
+                const [name, value] = cookie.trim().split('=');
+                if (name === 'csrftoken') {
+                    return decodeURIComponent(value);
+                }
+            }
+            return '';
+        }
         function switchMode(mode) {
             window.location.href = '?mode=' + mode;
         }
@@ -1618,6 +1666,7 @@
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
+                        'X-CSRFToken': getCSRFToken(),
                     },
                     body: JSON.stringify({
                         task_id: parseInt(taskId),
@@ -1864,77 +1913,203 @@
             hiddenInput.value = selectedThreadsForForm.join(',');
         }
 
-        // WYSIWYG Editor Functions
-        function exec(command, value = null) {
-            document.execCommand(command, false, value);
-            document.getElementById('full_description_editor').focus();
-        }
-
-        function getSelectionBlockElement() {
-            const selection = window.getSelection();
-            if (selection.rangeCount === 0) return null;
-            
-            let node = selection.getRangeAt(0).startContainer;
-            while (node && node.nodeType !== Node.ELEMENT_NODE) {
-                node = node.parentNode;
-            }
-            
-            while (node && !['P', 'DIV', 'BLOCKQUOTE', 'PRE', 'H1', 'H2', 'H3', 'H4', 'H5', 'H6'].includes(node.tagName)) {
-                node = node.parentNode;
-            }
-            
-            return node;
-        }
-
-        function toggleBlock(tagName) {
-            const blockElement = getSelectionBlockElement();
-            if (blockElement && blockElement.tagName.toLowerCase() === tagName) {
-                // Если уже в этом блоке, переключаем обратно на обычный параграф
-                document.execCommand('formatBlock', false, 'p');
-            } else {
-                // Применяем форматирование блока
-                document.execCommand('formatBlock', false, tagName);
-            }
-            document.getElementById('full_description_editor').focus();
-        }
-
-        function insertTable() {
-            const rows = prompt('Количество строк:', '3');
-            const cols = prompt('Количество столбцов:', '3');
-            
-            if (rows && cols && !isNaN(rows) && !isNaN(cols) && rows > 0 && cols > 0) {
-                let tableHTML = '<table><tbody>';
-                
-                // Создаем заголовки
-                tableHTML += '<tr>';
-                for (let i = 0; i < cols; i++) {
-                    tableHTML += '<th>Заголовок ' + (i + 1) + '</th>';
-                }
-                tableHTML += '</tr>';
-                
-                // Создаем строки данных
-                for (let i = 0; i < rows - 1; i++) {
-                    tableHTML += '<tr>';
-                    for (let j = 0; j < cols; j++) {
-                        tableHTML += '<td>Ячейка ' + (i + 1) + ',' + (j + 1) + '</td>';
-                    }
-                    tableHTML += '</tr>';
-                }
-                
-                tableHTML += '</tbody></table>';
-                
-                document.execCommand('insertHTML', false, tableHTML);
-                document.getElementById('full_description_editor').focus();
-            }
-        }
-
-        function syncEditorsToTextareas() {
-            // Синхронизируем содержимое WYSIWYG редактора с textarea
-            const editor = document.getElementById('full_description_editor');
+        // Markdown функции для описания задач
+        function insertMarkdownDescription(before, after) {
             const textarea = document.getElementById('full_description');
-            if (editor && textarea) {
-                textarea.value = editor.innerHTML;
+            if (!textarea) return false;
+            
+            const start = textarea.selectionStart;
+            const end = textarea.selectionEnd;
+            const selectedText = textarea.value.substring(start, end);
+            
+            const newText = before + selectedText + after;
+            textarea.value = textarea.value.substring(0, start) + newText + textarea.value.substring(end);
+            
+            // Устанавливаем курсор после вставленного текста
+            const newCursorPos = start + before.length + selectedText.length;
+            textarea.setSelectionRange(newCursorPos, newCursorPos);
+            textarea.focus();
+            
+            // Обновляем предпросмотр если он видим
+            updateDescriptionPreview();
+        }
+
+        function toggleDescriptionPreview() {
+            const textarea = document.getElementById('full_description');
+            const preview = document.getElementById('full_description_preview');
+            
+            if (!textarea || !preview) return;
+            
+            if (preview.style.display === 'none') {
+                // Показываем предпросмотр
+                preview.style.display = 'block';
+                textarea.style.display = 'none';
+                updateDescriptionPreview();
+            } else {
+                // Показываем редактор
+                preview.style.display = 'none';
+                textarea.style.display = 'block';
             }
+        }
+
+        function updateDescriptionPreview() {
+            const textarea = document.getElementById('full_description');
+            const preview = document.getElementById('full_description_preview');
+            
+            if (!textarea || !preview) return;
+            
+            const markdownText = textarea.value;
+            
+            // Отправляем запрос на предпросмотр
+            fetch('/markdown_preview', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCSRFToken(),
+                },
+                body: JSON.stringify({
+                    markdown: markdownText
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    preview.innerHTML = data.html;
+                } else {
+                    preview.innerHTML = '<p style="color: #ff6b6b;">Ошибка предпросмотра: ' + data.error + '</p>';
+                }
+            })
+            .catch(error => {
+                preview.innerHTML = '<p style="color: #ff6b6b;">Ошибка загрузки предпросмотра</p>';
+                console.error('Error:', error);
+            });
+        }
+
+        function toggleInline(textareaId, before, after) {
+            const textarea = document.getElementById(textareaId);
+            if (!textarea) return false;
+
+            textarea.focus();
+
+            let start = textarea.selectionStart;
+            let end = textarea.selectionEnd;
+            if (start === null || end === null) {
+                return false;
+            }
+
+            const text = textarea.value;
+            const beforeLen = before.length;
+            const afterLen = after.length;
+
+            if (start === end) {
+                const beforeStart = start - beforeLen;
+                const afterEnd = start + afterLen;
+                const hasMarkers = beforeStart >= 0 && afterEnd <= text.length &&
+                    text.substring(beforeStart, start) === before &&
+                    text.substring(start, afterEnd) === after;
+
+                if (hasMarkers) {
+                    textarea.value = text.substring(0, beforeStart) + text.substring(afterEnd);
+                    textarea.setSelectionRange(beforeStart, beforeStart);
+                } else {
+                    textarea.value = text.substring(0, start) + before + after + text.substring(end);
+                    textarea.setSelectionRange(start + beforeLen, start + beforeLen);
+                }
+            } else {
+                const hasWrap = start >= beforeLen && (end + afterLen) <= text.length &&
+                    text.substring(start - beforeLen, start) === before &&
+                    text.substring(end, end + afterLen) === after;
+
+                if (hasWrap) {
+                    textarea.value = text.substring(0, start - beforeLen) + text.substring(start, end) + text.substring(end + afterLen);
+                    textarea.setSelectionRange(start - beforeLen, end - beforeLen);
+                } else {
+                    textarea.value = text.substring(0, start) + before + text.substring(start, end) + after + text.substring(end);
+                    textarea.setSelectionRange(start + beforeLen, end + beforeLen);
+                }
+            }
+
+            if (textareaId === 'full_description') {
+                updateDescriptionPreview();
+            }
+            return false;
+        }
+
+        function toggleLinePrefix(textareaId, prefix) {
+            const textarea = document.getElementById(textareaId);
+            if (!textarea) return false;
+
+            textarea.focus();
+
+            let start = textarea.selectionStart;
+            let end = textarea.selectionEnd;
+
+            const text = textarea.value;
+            const lines = text.substring(0, start).split('\n');
+            const currentLineIndex = lines.length - 1;
+            const currentLine = lines[currentLineIndex];
+            const lineStart = start - currentLine.length;
+
+            const linesToToggle = text.substring(lineStart, end).split('\n');
+            const allHavePrefix = linesToToggle.every(line => line.startsWith(prefix));
+
+            let newText = text.substring(0, lineStart);
+            linesToToggle.forEach((line, index) => {
+                if (allHavePrefix) {
+                    newText += line.substring(prefix.length);
+                } else {
+                    newText += prefix + line;
+                }
+                if (index < linesToToggle.length - 1) {
+                    newText += '\n';
+                }
+            });
+            newText += text.substring(end);
+
+            const prefixChange = allHavePrefix ? -prefix.length : prefix.length;
+            const newStart = start + (lineStart === start ? prefixChange : 0);
+            const newEnd = end + (linesToToggle.length * prefixChange);
+
+            textarea.value = newText;
+            textarea.setSelectionRange(newStart, newEnd);
+
+            if (textareaId === 'full_description') {
+                updateDescriptionPreview();
+            }
+            return false;
+        }
+
+        function toggleFence(textareaId, fence) {
+            const textarea = document.getElementById(textareaId);
+            if (!textarea) return false;
+
+            textarea.focus();
+
+            let start = textarea.selectionStart;
+            let end = textarea.selectionEnd;
+
+            const text = textarea.value;
+            const selectedBlock = text.substring(start, end);
+            const before = text.substring(0, start);
+            const after = text.substring(end);
+
+            const fenceWithNewline = '\n' + fence + '\n';
+            const hasFence = selectedBlock.startsWith(fenceWithNewline) && selectedBlock.endsWith(fenceWithNewline);
+
+            if (hasFence) {
+                const unwrapped = selectedBlock.substring(fenceWithNewline.length, selectedBlock.length - fenceWithNewline.length);
+                textarea.value = before + unwrapped + after;
+                textarea.setSelectionRange(start, start + unwrapped.length);
+            } else {
+                const wrapped = fenceWithNewline + selectedBlock + fenceWithNewline;
+                textarea.value = before + wrapped + after;
+                textarea.setSelectionRange(start, end + (fenceWithNewline.length * 2));
+            }
+
+            if (textareaId === 'full_description') {
+                updateDescriptionPreview();
+            }
+            return false;
         }
 
         // Функция для синхронизации полос прокрутки
@@ -2046,16 +2221,63 @@
             setupThreadsInput();
             setupScrollbarSync();
             
-            // Добавляем обработчик для синхронизации WYSIWYG редактора
+            // Синхронизируем треды перед отправкой формы
             const addTaskForm = document.querySelector('form[action="/add_task"]');
             if (addTaskForm) {
                 addTaskForm.addEventListener('submit', function(e) {
-                    syncEditorsToTextareas();
                     // Синхронизируем треды перед отправкой
                     updateThreadsDisplay();
                 });
             }
         });
+
+        function runMigration() {
+            const btn = event.target;
+            const originalText = btn.textContent;
+            
+            // Отключаем кнопку и меняем текст
+            btn.disabled = true;
+            btn.textContent = '⏳ Обновление...';
+            
+            // Отправляем запрос на миграцию
+            fetch('/migrate_tasks', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCSRFToken(),
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'started') {
+                    // Ждём немного и обновляем страницу
+                    setTimeout(() => {
+                        btn.textContent = '✅ Обновлено';
+                        setTimeout(() => {
+                            // Обновляем страницу для отображения изменений
+                            window.location.reload();
+                        }, 500);
+                    }, 1000);
+                } else {
+                    // Ошибка
+                    btn.textContent = '❌ Ошибка';
+                    setTimeout(() => {
+                        btn.textContent = originalText;
+                        btn.disabled = false;
+                    }, 2000);
+                    alert('Ошибка при обновлении категорий: ' + (data.message || 'Неизвестная ошибка'));
+                }
+            })
+            .catch(error => {
+                console.error('Ошибка:', error);
+                btn.textContent = '❌ Ошибка';
+                setTimeout(() => {
+                    btn.textContent = originalText;
+                    btn.disabled = false;
+                }, 2000);
+                alert('Ошибка при обновлении категорий: ' + error.message);
+            });
+        }
     </script>
 </body>
 </html>

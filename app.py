@@ -1,4 +1,8 @@
-from flask import Flask, render_template, request, redirect, url_for, jsonify
+from flask import Flask, render_template, request, redirect, url_for, jsonify, session
+from flask_wtf.csrf import CSRFProtect
+from flask_limiter import Limiter
+from flask_limiter.util import get_remote_address
+from functools import lru_cache
 import json
 import re
 import sqlite3
@@ -9,8 +13,78 @@ from datetime import datetime
 import html
 import re as _re
 from logger import logger
+from markdown_utils import markdown_to_html, validate_markdown
+from auth import require_auth, get_auth
+from database_manager import get_db_manager
+from config_manager import get_config_manager
 
 app = Flask(__name__)
+# Генерируем секретный ключ для сессий и CSRF
+app.secret_key = os.environ.get('SECRET_KEY', 'todolite_secret_key_2025_change_in_production')
+
+# Загружаем конфигурацию для проверки настроек безопасности
+# ВАЖНО: Для обратной совместимости со старыми версиями CSRF защита отключена по умолчанию
+# Включите её в config.json, добавив "security": {"csrf_enabled": true}
+try:
+    config_manager = get_config_manager()
+    security_config = config_manager.get('security', {})
+    csrf_enabled = security_config.get('csrf_enabled', False)  # По умолчанию ОТКЛЮЧЕНО для совместимости
+except Exception as e:
+    logger.warning(f"Ошибка загрузки конфигурации безопасности: {e}. CSRF защита отключена.", "CONFIG")
+    csrf_enabled = False
+
+app.config['WTF_CSRF_ENABLED'] = csrf_enabled
+app.config['WTF_CSRF_TIME_LIMIT'] = None  # Без ограничения времени
+
+# Настройка безопасности сессий
+app.config['SESSION_COOKIE_HTTPONLY'] = True  # Защита от XSS через JavaScript
+app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'  # Защита от CSRF
+# SESSION_COOKIE_SECURE устанавливается только для HTTPS (в production)
+if os.environ.get('FLASK_ENV') == 'production':
+    app.config['SESSION_COOKIE_SECURE'] = True
+
+# Инициализируем CSRF защиту только если она включена
+csrf = None
+if csrf_enabled:
+    csrf = CSRFProtect(app)
+    logger.info("CSRF защита включена", "SECURITY")
+else:
+    logger.warning("CSRF защита ОТКЛЮЧЕНА для обратной совместимости со старыми версиями. Для включения добавьте в config.json: \"security\": {\"csrf_enabled\": true}", "SECURITY")
+    # Добавляем функцию-заглушку для шаблонов, чтобы избежать ошибок
+    @app.context_processor
+    def inject_csrf_token():
+        """Добавляет функцию csrf_token в контекст шаблонов"""
+        def csrf_token():
+            return ""  # Возвращаем пустую строку, когда CSRF отключен
+        return dict(csrf_token=csrf_token)
+
+# Настройка rate limiting для защиты от DoS
+limiter = Limiter(
+    app=app,
+    key_func=get_remote_address,
+    default_limits=["200 per hour", "50 per minute"],
+    storage_uri="memory://"
+)
+
+# Настройка security headers
+@app.after_request
+def set_security_headers(response):
+    """Устанавливает заголовки безопасности для всех ответов"""
+    response.headers['X-Frame-Options'] = 'DENY'
+    response.headers['X-Content-Type-Options'] = 'nosniff'
+    response.headers['X-XSS-Protection'] = '1; mode=block'
+    response.headers['Referrer-Policy'] = 'strict-origin-when-cross-origin'
+    # Content Security Policy (базовая)
+    response.headers['Content-Security-Policy'] = "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline';"
+    return response
+
+# Добавляем фильтр markdown в Jinja2
+@app.template_filter('markdown')
+def markdown_filter(text):
+    """Фильтр для конвертации Markdown в HTML в шаблонах"""
+    if not text:
+        return ""
+    return markdown_to_html(text)
 
 # Переменная для отслеживания состояния сервера
 server_running = True
@@ -49,6 +123,7 @@ def init_db():
             ('related_threads', 'TEXT'),
             ('scheduled_date', 'DATE'),
             ('due_date', 'DATE'),
+            ('reminder_time', 'DATETIME'),
             ('tags', 'TEXT'),
             ('completed_at', 'TIMESTAMP')
         ]
@@ -74,6 +149,7 @@ def init_db():
                       related_threads TEXT,
                       scheduled_date DATE,
                       due_date DATE,
+                      reminder_time DATETIME,
                       tags TEXT,
                       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                       updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -90,208 +166,102 @@ def init_db():
                   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                   FOREIGN KEY (task_id) REFERENCES tasks (id) ON DELETE CASCADE)''')
     
-    # Проверяем и добавляем новые поля для архивирования
-    try:
-        c.execute("ALTER TABLE tasks ADD COLUMN archived BOOLEAN DEFAULT 0")
-        logger.database("Добавлено поле archived в таблицу tasks", "MIGRATION")
-    except sqlite3.OperationalError:
-        pass  # Поле уже существует
+    # Проверяем и добавляем новые поля для архивирования (если таблица уже существует)
+    if table_exists:
+        # Обновляем список колонок после добавления новых
+        c.execute("PRAGMA table_info(tasks)")
+        columns = [column[1] for column in c.fetchall()]
+        
+        # Добавляем поля для архивирования, если их нет
+        archive_columns = [
+            ('archived', 'BOOLEAN DEFAULT 0'),
+            ('archived_at', 'TIMESTAMP'),
+            ('archived_from_status', 'TEXT')
+        ]
+        
+        for col_name, col_type in archive_columns:
+            if col_name not in columns:
+                try:
+                    c.execute(f"ALTER TABLE tasks ADD COLUMN {col_name} {col_type}")
+                    logger.database(f"Добавлено поле {col_name} в таблицу tasks", "MIGRATION")
+                except sqlite3.OperationalError as e:
+                    logger.warning(f"Не удалось добавить поле {col_name}: {e}", "MIGRATION")
     
-    try:
-        c.execute("ALTER TABLE tasks ADD COLUMN archived_at TIMESTAMP")
-        logger.database("Добавлено поле archived_at в таблицу tasks", "MIGRATION")
-    except sqlite3.OperationalError:
-        pass  # Поле уже существует
-    
-    try:
-        c.execute("ALTER TABLE tasks ADD COLUMN archived_from_status TEXT")
-        logger.database("Добавлено поле archived_from_status в таблицу tasks", "MIGRATION")
-    except sqlite3.OperationalError:
-        pass  # Поле уже существует
+    # Создаем индексы для оптимизации запросов (только если колонки существуют)
+    if table_exists:
+        c.execute("PRAGMA table_info(tasks)")
+        columns = [column[1] for column in c.fetchall()]
+        
+        # Создаем индексы только для существующих колонок
+        indexes = []
+        if 'archived' in columns:
+            indexes.append(("idx_tasks_archived", "tasks", "archived"))
+        if 'status' in columns:
+            indexes.append(("idx_tasks_status", "tasks", "status"))
+        if 'due_date' in columns:
+            indexes.append(("idx_tasks_due_date", "tasks", "due_date"))
+        if 'scheduled_date' in columns:
+            indexes.append(("idx_tasks_scheduled_date", "tasks", "scheduled_date"))
+        if 'created_at' in columns:
+            indexes.append(("idx_tasks_created_at", "tasks", "created_at"))
+        
+        # Проверяем существование таблицы комментариев
+        c.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='task_comments'")
+        if c.fetchone():
+            indexes.append(("idx_task_comments_task_id", "task_comments", "task_id"))
+        
+        for index_name, table_name, column_name in indexes:
+            try:
+                c.execute(f"CREATE INDEX IF NOT EXISTS {index_name} ON {table_name}({column_name})")
+                logger.database(f"Создан индекс {index_name} на {table_name}.{column_name}", "MIGRATION")
+            except sqlite3.OperationalError as e:
+                logger.warning(f"Ошибка создания индекса {index_name}: {e}", "MIGRATION")
     
     conn.commit()
     conn.close()
 
 # Получить все задачи (исключая архивированные)
 def get_tasks():
-    conn = sqlite3.connect('tasks.db')
-    c = conn.cursor()
-    c.execute("SELECT * FROM tasks WHERE archived = 0 OR archived IS NULL ORDER BY created_at DESC")
-    tasks = c.fetchall()
-    conn.close()
+    db = get_db_manager()
+    # Проверяем наличие колонки archived для обратной совместимости
+    try:
+        # Пытаемся выполнить запрос с проверкой archived
+        tasks = db.execute_query(
+            "SELECT * FROM tasks WHERE (archived = 0 OR archived IS NULL) ORDER BY created_at DESC",
+            fetch=True
+        )
+    except sqlite3.OperationalError:
+        # Если колонка archived отсутствует, получаем все задачи
+        logger.warning("Колонка 'archived' отсутствует, получаем все задачи", "MIGRATION")
+        tasks = db.execute_query(
+            "SELECT * FROM tasks ORDER BY created_at DESC",
+            fetch=True
+        )
     return tasks
 
 # Получить задачи по режиму отображения
 def get_tasks_by_mode(mode):
-    conn = sqlite3.connect('tasks.db')
-    c = conn.cursor()
-    
-    # В обоих режимах сортируем по приоритету: high -> medium -> low, затем по сроку
-    if mode == 'eisenhower':
-        c.execute("""
-            SELECT 
-                id,
-                title,
-                short_description,
-                full_description,
-                status,
-                priority,
-                eisenhower_priority,
-                assigned_to,
-                related_threads,
-                scheduled_date,
-                due_date,
-                created_at,
-                updated_at,
-                completed_at,
-                tags
-            FROM tasks
-            WHERE archived = 0 OR archived IS NULL
-            ORDER BY 
-                CASE priority WHEN 'high' THEN 1 WHEN 'medium' THEN 2 ELSE 3 END,
-                COALESCE(due_date, '') ASC
-        """)
-    elif mode == 'kanban':
-        c.execute("""
-            SELECT 
-                id,
-                title,
-                short_description,
-                full_description,
-                status,
-                priority,
-                eisenhower_priority,
-                assigned_to,
-                related_threads,
-                scheduled_date,
-                due_date,
-                created_at,
-                updated_at,
-                completed_at,
-                tags
-            FROM tasks
-            WHERE archived = 0 OR archived IS NULL
-            ORDER BY 
-                CASE priority WHEN 'high' THEN 1 WHEN 'medium' THEN 2 ELSE 3 END,
-                COALESCE(due_date, '') ASC
-        """)
-    else:
-        c.execute("""
-            SELECT 
-                id,
-                title,
-                short_description,
-                full_description,
-                status,
-                priority,
-                eisenhower_priority,
-                assigned_to,
-                related_threads,
-                scheduled_date,
-                due_date,
-                created_at,
-                updated_at,
-                completed_at,
-                tags
-            FROM tasks 
-            ORDER BY created_at DESC
-        """)
-    
-    tasks = c.fetchall()
-    conn.close()
+    db = get_db_manager()
+    query = db.get_tasks_base_query(mode=mode, include_comments=False)
+    tasks = db.execute_query(query, fetch=True)
     return tasks
 
 # Получить задачи по режиму отображения с комментариями для поиска
 def get_tasks_by_mode_with_comments(mode):
-    conn = sqlite3.connect('tasks.db')
-    c = conn.cursor()
+    db = get_db_manager()
+    # Получаем все задачи с комментариями одним запросом (исправление N+1 проблемы)
+    query = db.get_tasks_base_query(mode=mode, include_comments=True)
+    tasks = db.execute_query(query, fetch=True)
     
-    # Получаем все задачи
-    if mode == 'eisenhower':
-        c.execute("""
-            SELECT 
-                id,
-                title,
-                short_description,
-                full_description,
-                status,
-                priority,
-                eisenhower_priority,
-                assigned_to,
-                related_threads,
-                scheduled_date,
-                due_date,
-                created_at,
-                updated_at,
-                completed_at,
-                tags
-            FROM tasks
-            WHERE archived = 0 OR archived IS NULL
-            ORDER BY 
-                CASE priority WHEN 'high' THEN 1 WHEN 'medium' THEN 2 ELSE 3 END,
-                COALESCE(due_date, '') ASC
-        """)
-    elif mode == 'kanban':
-        c.execute("""
-            SELECT 
-                id,
-                title,
-                short_description,
-                full_description,
-                status,
-                priority,
-                eisenhower_priority,
-                assigned_to,
-                related_threads,
-                scheduled_date,
-                due_date,
-                created_at,
-                updated_at,
-                completed_at,
-                tags
-            FROM tasks
-            WHERE archived = 0 OR archived IS NULL
-            ORDER BY 
-                CASE priority WHEN 'high' THEN 1 WHEN 'medium' THEN 2 ELSE 3 END,
-                COALESCE(due_date, '') ASC
-        """)
-    else:
-        c.execute("""
-            SELECT 
-                id,
-                title,
-                short_description,
-                full_description,
-                status,
-                priority,
-                eisenhower_priority,
-                assigned_to,
-                related_threads,
-                scheduled_date,
-                due_date,
-                created_at,
-                updated_at,
-                completed_at,
-                tags
-            FROM tasks 
-            ORDER BY created_at DESC
-        """)
-    
-    tasks = c.fetchall()
-    
-    # Для каждой задачи получаем комментарии и добавляем их к данным задачи
+    # Преобразуем результаты: заменяем NULL на пустую строку для комментариев
     tasks_with_comments = []
     for task in tasks:
-        task_id = task[0]
-        c.execute("SELECT comment FROM task_comments WHERE task_id = ?", (task_id,))
-        comments = c.fetchall()
-        # Объединяем все комментарии в одну строку
-        comments_text = ' '.join([comment[0] for comment in comments])
-        # Добавляем комментарии как дополнительный элемент к кортежу задачи
-        task_with_comments = task + (comments_text,)
-        tasks_with_comments.append(task_with_comments)
+        # Последний элемент - это комментарии (может быть None)
+        task_list = list(task)
+        if task_list[-1] is None:
+            task_list[-1] = ''
+        tasks_with_comments.append(tuple(task_list))
     
-    conn.close()
     return tasks_with_comments
 
 
@@ -342,8 +312,8 @@ def format_date_ru(value: str):
         try:
             dt = datetime.strptime(cleaned[:10], '%Y-%m-%d')
             return dt.strftime('%d.%m.%Y')
-        except Exception:
-            pass
+        except Exception as e:
+            logger.debug(f"Ошибка форматирования даты: {e}", "FORMAT")
         # Дата+время
         for fmt in ('%Y-%m-%d %H:%M:%S', '%Y-%m-%dT%H:%M:%S', '%Y-%m-%d %H:%M:%S.%f', '%Y-%m-%dT%H:%M:%S.%f'):
             try:
@@ -361,8 +331,31 @@ def format_date_ru(value: str):
         return ''
 
 
-# Регистрируем фильтр в Jinja
+def format_datetime_ru(value: str):
+    """Форматирует дату и время в русском формате"""
+    if not value:
+        return ''
+    try:
+        cleaned = str(value).strip()
+        # Попытка ISO с временем
+        for fmt in ('%Y-%m-%dT%H:%M', '%Y-%m-%d %H:%M:%S', '%Y-%m-%dT%H:%M:%S', '%Y-%m-%d %H:%M:%S.%f', '%Y-%m-%dT%H:%M:%S.%f'):
+            try:
+                dt = datetime.strptime(cleaned[:26], fmt)
+                return dt.strftime('%d.%m.%Y %H:%M')
+            except Exception:
+                continue
+        # Последняя попытка: fromisoformat если доступно
+        try:
+            dt = datetime.fromisoformat(cleaned)
+            return dt.strftime('%d.%m.%Y %H:%M')
+        except Exception:
+            return cleaned
+    except Exception:
+        return ''
+
+# Регистрируем фильтры в Jinja
 app.jinja_env.filters['ru_date'] = format_date_ru
+app.jinja_env.filters['ru_datetime'] = format_datetime_ru
 
 
 # Безопасная очистка HTML: убираем опасные теги и атрибуты
@@ -447,11 +440,10 @@ def sanitize_html(raw: str) -> str:
 
 # Получить задачу по ID с комментариями
 def get_task_with_comments(task_id):
-    conn = sqlite3.connect('tasks.db')
-    c = conn.cursor()
+    db = get_db_manager()
     
     # Получаем задачу
-    c.execute("""
+    task = db.execute_query("""
         SELECT 
             id,
             title,
@@ -464,6 +456,7 @@ def get_task_with_comments(task_id):
             related_threads,
             scheduled_date,
             due_date,
+            reminder_time,
             created_at,
             updated_at,
             completed_at,
@@ -472,45 +465,45 @@ def get_task_with_comments(task_id):
             archived_at,
             archived_from_status
         FROM tasks WHERE id = ?
-    """, (task_id,))
-    task = c.fetchone()
+    """, (task_id,), fetchone=True)
     
     # Получаем комментарии
     # Новые комментарии первыми
-    c.execute("SELECT * FROM task_comments WHERE task_id = ? ORDER BY created_at DESC", (task_id,))
-    comments = c.fetchall()
+    comments = db.execute_query(
+        "SELECT * FROM task_comments WHERE task_id = ? ORDER BY created_at DESC",
+        (task_id,),
+        fetch=True
+    )
     
-    conn.close()
     return task, comments
 
 # Добавить новую задачу
 def add_task(title, short_description, full_description, status, priority, eisenhower_priority, 
-             assigned_to, related_threads, scheduled_date, due_date, tags):
+             assigned_to, related_threads, scheduled_date, due_date, reminder_time, tags):
     logger.task(f"Создание новой задачи: '{title[:30]}...'", "CREATE")
     logger.database(f"Сохранение в БД: assigned_to='{assigned_to}', threads='{related_threads}'", "DB_WRITE")
     
-    conn = sqlite3.connect('tasks.db')
-    c = conn.cursor()
-    c.execute("""INSERT INTO tasks (title, short_description, full_description, status, priority, 
-                 eisenhower_priority, assigned_to, related_threads, scheduled_date, due_date, tags) 
-                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+    db = get_db_manager()
+    db.execute_query("""INSERT INTO tasks (title, short_description, full_description, status, priority, 
+                 eisenhower_priority, assigned_to, related_threads, scheduled_date, due_date, reminder_time, tags) 
+                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
               (title, short_description, full_description, status, priority, eisenhower_priority,
-               assigned_to, related_threads, scheduled_date, due_date, tags))
-    conn.commit()
-    conn.close()
+               assigned_to, related_threads, scheduled_date, due_date, reminder_time, tags))
+    
+    # Очищаем кэш тегов при изменении задач
+    _get_cached_tags.cache_clear()
     
     logger.success(f"Задача успешно создана: '{title[:30]}...'", "CREATE")
 
 # Обновить задачу
 def update_task(task_id, title, short_description, full_description, status, priority, 
-                eisenhower_priority, assigned_to, related_threads, scheduled_date, due_date, tags):
+                eisenhower_priority, assigned_to, related_threads, scheduled_date, due_date, reminder_time, tags):
     logger.task(f"Обновление задачи ID {task_id}: '{title[:30]}...'", "UPDATE")
-    logger.database(f"Обновление в БД: status='{status}', threads='{related_threads}'", "DB_WRITE")
+    logger.database(f"Обновление в БД: status='{status}', threads='{related_threads}', reminder_time='{reminder_time}'", "DB_WRITE")
     
-    conn = sqlite3.connect('tasks.db')
-    c = conn.cursor()
+    db = get_db_manager()
     # Если статус переводится в 'done', проставляем completed_at только один раз
-    c.execute("""
+    db.execute_query("""
         UPDATE tasks SET 
             title=?, 
             short_description=?, 
@@ -523,6 +516,7 @@ def update_task(task_id, title, short_description, full_description, status, pri
             tags=?,
             scheduled_date=?, 
             due_date=?, 
+            reminder_time=?,
             updated_at=CURRENT_TIMESTAMP,
             completed_at=CASE 
                 WHEN ?='done' AND (completed_at IS NULL OR completed_at='') THEN CURRENT_TIMESTAMP 
@@ -532,99 +526,160 @@ def update_task(task_id, title, short_description, full_description, status, pri
     """,
         (
             title, short_description, full_description, status, priority, eisenhower_priority,
-            assigned_to, related_threads, tags, scheduled_date, due_date, status, task_id
+            assigned_to, related_threads, tags, scheduled_date, due_date, reminder_time, status, task_id
         )
     )
-    conn.commit()
-    conn.close()
+    
+    # Очищаем кэш тегов при изменении задач
+    _get_cached_tags.cache_clear()
     
     logger.success(f"Задача ID {task_id} успешно обновлена", "UPDATE")
 
 # Добавить комментарий к задаче
 def add_comment(task_id, comment):
-    conn = sqlite3.connect('tasks.db')
-    c = conn.cursor()
-    c.execute("INSERT INTO task_comments (task_id, comment) VALUES (?, ?)", (task_id, comment))
-    conn.commit()
-    conn.close()
+    db = get_db_manager()
+    db.execute_query("INSERT INTO task_comments (task_id, comment) VALUES (?, ?)", (task_id, comment))
 
 # Удалить задачу
 def delete_task(task_id):
-    conn = sqlite3.connect('tasks.db')
-    c = conn.cursor()
-    c.execute("DELETE FROM tasks WHERE id = ?", (task_id,))
-    conn.commit()
-    conn.close()
+    db = get_db_manager()
+    db.execute_query("DELETE FROM tasks WHERE id = ?", (task_id,))
+    # Очищаем кэш тегов при изменении задач
+    _get_cached_tags.cache_clear()
 
 # Архивировать задачу
 def archive_task(task_id):
-    conn = sqlite3.connect('tasks.db')
-    c = conn.cursor()
+    db = get_db_manager()
+    
+    # Проверяем наличие колонки archived для обратной совместимости
+    if not db._check_column_exists('tasks', 'archived'):
+        logger.warning("Колонка 'archived' отсутствует. Архивирование недоступно для старых БД.", "MIGRATION")
+        return False
     
     # Получаем текущий статус задачи
-    c.execute("SELECT status FROM tasks WHERE id = ?", (task_id,))
-    result = c.fetchone()
+    result = db.execute_query("SELECT status FROM tasks WHERE id = ?", (task_id,), fetchone=True)
     if not result:
-        conn.close()
         return False
     
     current_status = result[0]
     
-    # Архивируем задачу
-    c.execute("""
-        UPDATE tasks 
-        SET archived = 1, 
-            archived_at = CURRENT_TIMESTAMP,
-            archived_from_status = ?
-        WHERE id = ?
-    """, (current_status, task_id))
+    # Архивируем задачу (с проверкой наличия колонок)
+    if db._check_column_exists('tasks', 'archived_from_status'):
+        db.execute_query("""
+            UPDATE tasks 
+            SET archived = 1, 
+                archived_at = CURRENT_TIMESTAMP,
+                archived_from_status = ?
+            WHERE id = ?
+        """, (current_status, task_id))
+    else:
+        # Старая БД без archived_from_status
+        if db._check_column_exists('tasks', 'archived_at'):
+            db.execute_query("""
+                UPDATE tasks 
+                SET archived = 1, 
+                    archived_at = CURRENT_TIMESTAMP
+                WHERE id = ?
+            """, (task_id,))
+        else:
+            # Самая старая БД - только archived
+            db.execute_query("""
+                UPDATE tasks 
+                SET archived = 1
+                WHERE id = ?
+            """, (task_id,))
     
-    conn.commit()
-    conn.close()
+    # Очищаем кэш тегов при изменении задач
+    _get_cached_tags.cache_clear()
+    
     return True
 
 # Восстановить задачу из архива
 def restore_task(task_id):
-    conn = sqlite3.connect('tasks.db')
-    c = conn.cursor()
+    db = get_db_manager()
     
-    # Получаем статус, из которого была архивирована задача
-    c.execute("SELECT archived_from_status FROM tasks WHERE id = ? AND archived = 1", (task_id,))
-    result = c.fetchone()
-    if not result:
-        conn.close()
+    # Проверяем наличие колонки archived для обратной совместимости
+    if not db._check_column_exists('tasks', 'archived'):
+        logger.warning("Колонка 'archived' отсутствует. Восстановление недоступно для старых БД.", "MIGRATION")
         return False
     
-    original_status = result[0]
+    # Получаем статус, из которого была архивирована задача (если колонка существует)
+    original_status = 'new'
+    if db._check_column_exists('tasks', 'archived_from_status'):
+        result = db.execute_query("SELECT archived_from_status FROM tasks WHERE id = ? AND archived = 1", (task_id,), fetchone=True)
+        if result and result[0]:
+            original_status = result[0]
     
-    # Восстанавливаем задачу
-    c.execute("""
-        UPDATE tasks 
-        SET archived = 0, 
-            archived_at = NULL,
-            archived_from_status = NULL,
-            status = ?
-        WHERE id = ?
-    """, (original_status, task_id))
+    # Восстанавливаем задачу (с проверкой наличия колонок)
+    if db._check_column_exists('tasks', 'archived_from_status') and db._check_column_exists('tasks', 'archived_at'):
+        db.execute_query("""
+            UPDATE tasks 
+            SET archived = 0, 
+                archived_at = NULL,
+                archived_from_status = NULL,
+                status = ?
+            WHERE id = ?
+        """, (original_status, task_id))
+    elif db._check_column_exists('tasks', 'archived_at'):
+        db.execute_query("""
+            UPDATE tasks 
+            SET archived = 0, 
+                archived_at = NULL,
+                status = ?
+            WHERE id = ?
+        """, (original_status, task_id))
+    else:
+        # Самая старая БД - только archived
+        db.execute_query("""
+            UPDATE tasks 
+            SET archived = 0,
+                status = ?
+            WHERE id = ?
+        """, (original_status, task_id))
     
-    conn.commit()
-    conn.close()
+    # Очищаем кэш тегов при изменении задач
+    _get_cached_tags.cache_clear()
+    
     return True
 
 # Получить архивированные задачи
 def get_archived_tasks():
-    conn = sqlite3.connect('tasks.db')
-    c = conn.cursor()
-    c.execute("""
-        SELECT * FROM tasks 
-        WHERE archived = 1 
-        ORDER BY archived_at DESC
-    """)
-    tasks = c.fetchall()
-    conn.close()
+    """Получает архивированные задачи с комментариями"""
+    db = get_db_manager()
+    
+    # Проверяем наличие колонки archived для обратной совместимости
+    if not db._check_column_exists('tasks', 'archived'):
+        logger.warning("Колонка 'archived' отсутствует. Архив недоступен для старых БД.", "MIGRATION")
+        return []
+    
+    # Проверяем наличие колонки archived_at для сортировки
+    if db._check_column_exists('tasks', 'archived_at'):
+        tasks = db.execute_query("""
+            SELECT 
+                t.*,
+                GROUP_CONCAT(tc.comment, ' ') as comments
+            FROM tasks t 
+            LEFT JOIN task_comments tc ON t.id = tc.task_id
+            WHERE t.archived = 1 
+            GROUP BY t.id
+            ORDER BY t.archived_at DESC
+        """, fetch=True)
+    else:
+        # Старая БД без archived_at - сортируем по created_at
+        tasks = db.execute_query("""
+            SELECT 
+                t.*,
+                GROUP_CONCAT(tc.comment, ' ') as comments
+            FROM tasks t 
+            LEFT JOIN task_comments tc ON t.id = tc.task_id
+            WHERE t.archived = 1 
+            GROUP BY t.id
+            ORDER BY t.created_at DESC
+        """, fetch=True)
     return tasks
 
 @app.route('/')
+@require_auth
 def index():
     mode = request.args.get('mode', 'kanban')
     logger.http(f"Запрос главной страницы, режим: {mode}", "HTTP_GET")
@@ -634,6 +689,7 @@ def index():
     return render_template('index.html', tasks=tasks, current_mode=mode, cfg=cfg)
 
 @app.route('/task/<int:task_id>')
+@require_auth
 def view_task(task_id):
     logger.http(f"Запрос деталей задачи ID {task_id}", "HTTP_GET")
     task, comments = get_task_with_comments(task_id)
@@ -645,6 +701,7 @@ def view_task(task_id):
     return render_template('task_detail.html', task=task, comments=comments, cfg=cfg)
 
 @app.route('/archive')
+@require_auth
 def archive():
     logger.http("Запрос страницы архива", "HTTP_GET")
     tasks = get_archived_tasks()
@@ -653,12 +710,14 @@ def archive():
     return render_template('archive.html', tasks=tasks, cfg=cfg)
 
 @app.route('/add_task', methods=['POST'])
+@limiter.limit("10 per minute")
+@require_auth
 def add_task_route():
     logger.http("Запрос создания новой задачи", "HTTP_POST")
     
     title = request.form['title']
     short_description = request.form.get('short_description', '')
-    full_description = sanitize_html(request.form.get('full_description', ''))
+    full_description = request.form.get('full_description', '')
     status = request.form.get('status', 'new')
     priority = request.form.get('priority', 'medium')
     eisenhower_priority = request.form.get('eisenhower_priority', 'not_urgent_not_important')
@@ -667,24 +726,28 @@ def add_task_route():
     tags = request.form.get('tags', '')
     scheduled_date = request.form.get('scheduled_date', '')
     due_date = request.form.get('due_date', '')
+    reminder_time = request.form.get('reminder_time', '')
     
     # Отладочная информация
     logger.form(f"related_threads = '{related_threads}'", "FORM_DATA")
     logger.form(f"assigned_to = '{assigned_to}'", "FORM_DATA")
     logger.form(f"scheduled_date = '{scheduled_date}'", "FORM_DATA")
     logger.form(f"due_date = '{due_date}'", "FORM_DATA")
+    logger.form(f"reminder_time = '{reminder_time}'", "FORM_DATA")
     
     add_task(title, short_description, full_description, status, priority, eisenhower_priority,
-             assigned_to, related_threads, scheduled_date, due_date, tags)
+             assigned_to, related_threads, scheduled_date, due_date, reminder_time, tags)
     return redirect(url_for('index'))
 
 @app.route('/update_task/<int:task_id>', methods=['POST'])
+@limiter.limit("20 per minute")
+@require_auth
 def update_task_route(task_id):
     logger.http(f"Запрос обновления задачи ID {task_id}", "HTTP_POST")
     
     title = request.form['title']
     short_description = request.form.get('short_description', '')
-    full_description = sanitize_html(request.form.get('full_description', ''))
+    full_description = request.form.get('full_description', '')
     status = request.form.get('status', 'new')
     priority = request.form.get('priority', 'medium')
     eisenhower_priority = request.form.get('eisenhower_priority', 'not_urgent_not_important')
@@ -693,12 +756,20 @@ def update_task_route(task_id):
     tags = request.form.get('tags', '')
     scheduled_date = request.form.get('scheduled_date', '')
     due_date = request.form.get('due_date', '')
+    reminder_time = request.form.get('reminder_time', '')
+    
+    # Отладочная информация
+    logger.form(f"UPDATE - reminder_time = '{reminder_time}'", "FORM_DATA")
+    logger.form(f"UPDATE - scheduled_date = '{scheduled_date}'", "FORM_DATA")
+    logger.form(f"UPDATE - due_date = '{due_date}'", "FORM_DATA")
     
     update_task(task_id, title, short_description, full_description, status, priority,
-                eisenhower_priority, assigned_to, related_threads, scheduled_date, due_date, tags)
+                eisenhower_priority, assigned_to, related_threads, scheduled_date, due_date, reminder_time, tags)
     return redirect(url_for('view_task', task_id=task_id))
 
 @app.route('/add_comment/<int:task_id>', methods=['POST'])
+@limiter.limit("30 per minute")
+@require_auth
 def add_comment_route(task_id):
     logger.http(f"Запрос добавления комментария к задаче ID {task_id}", "HTTP_POST")
     
@@ -707,11 +778,85 @@ def add_comment_route(task_id):
         logger.warning(f"Пустой комментарий для задачи ID {task_id}", "EMPTY_COMMENT")
         return redirect(url_for('view_task', task_id=task_id, open_edit=1))
     
-    comment = sanitize_html(comment)
+    # Валидируем Markdown
+    is_valid, error_msg = validate_markdown(comment)
+    if not is_valid:
+        logger.warning(f"Невалидный Markdown в комментарии для задачи ID {task_id}: {error_msg}", "INVALID_MARKDOWN")
+        return redirect(url_for('view_task', task_id=task_id, open_edit=1))
+    
+    # Конвертируем Markdown в HTML
+    comment_html = markdown_to_html(comment)
+    
+    # Сохраняем оригинальный Markdown текст
     add_comment(task_id, comment)
     logger.success(f"Комментарий добавлен к задаче ID {task_id}", "COMMENT_ADD")
     # После добавления комментария раскрываем блок редактирования
     return redirect(url_for('view_task', task_id=task_id, open_edit=1))
+
+@app.route('/login', methods=['GET', 'POST'])
+@limiter.limit("5 per minute")
+def login():
+    """Страница входа в систему"""
+    auth = get_auth()
+    
+    # Если аутентификация отключена, перенаправляем на главную
+    if not auth.users:
+        return redirect(url_for('index'))
+    
+    if request.method == 'POST':
+        username = request.form.get('username', '')
+        password = request.form.get('password', '')
+        
+        if auth.check_auth(username, password):
+            session['authenticated'] = True
+            session['username'] = username
+            logger.info(f"Пользователь {username} вошел в систему", "AUTH")
+            return redirect(url_for('index'))
+        else:
+            logger.warning(f"Неудачная попытка входа: {username}", "AUTH")
+            return render_template('login.html', error="Неверное имя пользователя или пароль")
+    
+    return render_template('login.html')
+
+@app.route('/logout')
+def logout():
+    """Выход из системы"""
+    auth = get_auth()
+    auth.logout()
+    return redirect(url_for('login'))
+
+@app.route('/markdown_preview', methods=['POST'])
+@limiter.limit("60 per minute")
+def markdown_preview_route():
+    """API для предпросмотра Markdown"""
+    try:
+        markdown_text = request.json.get('markdown', '')
+        
+        # Валидируем Markdown
+        is_valid, error_msg = validate_markdown(markdown_text)
+        if not is_valid:
+            return jsonify({
+                'success': False,
+                'error': error_msg,
+                'html': ''
+            })
+        
+        # Конвертируем в HTML
+        html = markdown_to_html(markdown_text)
+        
+        return jsonify({
+            'success': True,
+            'html': html,
+            'error': ''
+        })
+        
+    except Exception as e:
+        logger.error(f"Ошибка предпросмотра Markdown: {e}", "MARKDOWN_PREVIEW")
+        return jsonify({
+            'success': False,
+            'error': str(e),
+            'html': ''
+        })
 
 @app.route('/delete_task/<int:task_id>')
 def delete_task_route(task_id):
@@ -747,10 +892,8 @@ def mark_done_route(task_id):
     logger.http(f"Запрос отметки задачи ID {task_id} как выполненной", "HTTP_GET")
     logger.task(f"Отметка задачи ID {task_id} как выполненной", "MARK_DONE")
     
-    conn = sqlite3.connect('tasks.db')
-    c = conn.cursor()
-    
-    c.execute("""
+    db = get_db_manager()
+    db.execute_query("""
         UPDATE tasks SET 
             status = 'done',
             completed_at = CURRENT_TIMESTAMP,
@@ -758,13 +901,11 @@ def mark_done_route(task_id):
         WHERE id = ?
     """, (task_id,))
     
-    conn.commit()
-    conn.close()
-    
     logger.success(f"Задача ID {task_id} отмечена как выполненная", "MARK_DONE")
     return redirect(url_for('view_task', task_id=task_id))
 
 @app.route('/update_task_status', methods=['POST'])
+@limiter.limit("30 per minute")
 def update_task_status():
     """API endpoint для обновления статуса задачи через drag&drop"""
     logger.http("API запрос обновления статуса задачи", "API_POST")
@@ -779,11 +920,10 @@ def update_task_status():
     
     logger.task(f"Обновление статуса задачи ID {task_id} на '{new_status}'", "STATUS_UPDATE")
     
-    conn = sqlite3.connect('tasks.db')
-    c = conn.cursor()
+    db = get_db_manager()
     
     # Обновляем только статус задачи
-    c.execute("""
+    db.execute_query("""
         UPDATE tasks SET 
             status = ?, 
             updated_at = CURRENT_TIMESTAMP,
@@ -794,31 +934,35 @@ def update_task_status():
         WHERE id = ?
     """, (new_status, new_status, task_id))
     
-    conn.commit()
-    conn.close()
+    # Очищаем кэш тегов при изменении задач (на случай если изменились теги)
+    _get_cached_tags.cache_clear()
     
     logger.success(f"Статус задачи ID {task_id} обновлен на '{new_status}'", "STATUS_UPDATE")
     return {'success': True}
+
+@lru_cache(maxsize=128)
+def _get_cached_tags():
+    """
+    Получает теги из БД с кэшированием
+    Кэш очищается при изменении задач
+    """
+    db = get_db_manager()
+    tags_data = db.execute_query("""
+        SELECT tags, COUNT(*) as count 
+        FROM tasks 
+        WHERE tags IS NOT NULL AND tags != '' 
+        GROUP BY tags
+        ORDER BY count DESC, tags ASC
+    """, fetch=True)
+    return tags_data
 
 @app.route('/api/tags')
 def get_tags():
     """API для получения всех тегов с количеством задач"""
     logger.http("API запрос получения тегов", "API_GET")
     
-    conn = sqlite3.connect('tasks.db')
-    c = conn.cursor()
-    
-    # Получаем все теги и считаем количество задач для каждого
-    c.execute("""
-        SELECT tags, COUNT(*) as count 
-        FROM tasks 
-        WHERE tags IS NOT NULL AND tags != '' 
-        GROUP BY tags
-        ORDER BY count DESC, tags ASC
-    """)
-    
-    tags_data = c.fetchall()
-    conn.close()
+    # Используем кэшированные теги
+    tags_data = _get_cached_tags()
     
     # Парсим теги и создаем список уникальных тегов с количеством
     tag_counts = {}
@@ -843,10 +987,46 @@ def get_tags():
 def test_api_page():
     return app.send_static_file('test_api.html')
 
+@app.route('/migrate_tasks', methods=['POST'])
+@limiter.limit("5 per minute")
+@require_auth
+def migrate_tasks():
+    """Ручной запуск миграции задач"""
+    try:
+        from category_migration_manager import get_migration_manager
+        migration_manager = get_migration_manager()
+        
+        # Запускаем миграцию в отдельном потоке
+        result = {'status': 'started', 'message': 'Миграция запущена'}
+        migration_manager.migrate_tasks_async()
+        
+        return jsonify(result), 202  # 202 Accepted - запрос принят, обработка началась
+    except Exception as e:
+        logger.error(f"Ошибка при запуске миграции: {e}", "MIGRATION")
+        return jsonify({'status': 'error', 'message': str(e)}), 500
+
+@app.route('/migrate_tasks_status', methods=['GET'])
+@require_auth
+def migrate_tasks_status():
+    """Получить статус последней миграции (для будущего использования)"""
+    # Пока просто возвращаем успешный статус
+    # В будущем можно добавить отслеживание статуса миграции
+    return jsonify({'status': 'completed', 'message': 'Миграция выполнена'}), 200
+
 if __name__ == '__main__':
     logger.info("Запуск ToDoLite приложения", "STARTUP")
     logger.database("Инициализация базы данных", "DB_INIT")
     init_db()
     logger.success("База данных инициализирована", "DB_INIT")
+    
+    # Запускаем менеджер миграции категорий
+    try:
+        from category_migration_manager import get_migration_manager
+        migration_manager = get_migration_manager()
+        migration_manager.start_scheduler()
+        logger.success("Менеджер миграции категорий запущен", "MIGRATION")
+    except Exception as e:
+        logger.error(f"Ошибка запуска менеджера миграции категорий: {e}", "MIGRATION")
+    
     logger.http("Запуск Flask сервера на http://0.0.0.0:5000", "SERVER_START")
     app.run(debug=True, host='0.0.0.0', port=5000)

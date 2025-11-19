@@ -431,31 +431,39 @@
         }
 
         .form-section h3 {
-            margin-bottom: 15px;
+            margin-bottom: 8px;
             color: #d4d4d4;
+            font-size: 14px;
+        }
+
+        .form-grid {
+            gap: 8px !important;
+            margin-bottom: 8px !important;
         }
 
         .form-group {
-            margin-bottom: 15px;
+            margin-bottom: 8px;
         }
 
         .form-group label {
             display: block;
-            margin-bottom: 5px;
+            margin-bottom: 3px;
             font-weight: bold;
             color: #d4d4d4;
+            font-size: 13px;
         }
 
         .form-group input,
         .form-group select,
         .form-group textarea {
             width: 100%;
-            padding: 12px;
+            padding: 6px 8px;
             border: 2px solid #555;
-            border-radius: 8px;
+            border-radius: 6px;
             background: #1e1e1e;
             color: #d4d4d4;
-            font-size: 16px;
+            font-size: 13px;
+            line-height: 1.4;
             transition: border-color 0.3s;
         }
 
@@ -467,75 +475,168 @@
             box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
         }
 
-        /* Простой RTF-редактор */
-        .rtf-toolbar {
+        .form-text {
+            font-size: 11px;
+            margin-top: 2px;
+            line-height: 1.3;
+        }
+
+
+        /* Markdown редактор */
+        .markdown-toolbar {
             display: flex;
             gap: 6px;
             flex-wrap: wrap;
             margin-bottom: 8px;
-        }
-        .rtf-toolbar button {
+            padding: 8px;
             background: #2d2d30;
-            color: #d4d4d4;
             border: 1px solid #3c3c3c;
+            border-radius: 4px;
+        }
+        
+        .markdown-toolbar button {
+            background: #3c3c3c;
+            color: #d4d4d4;
+            border: 1px solid #555;
             padding: 6px 8px;
             border-radius: 4px;
             cursor: pointer;
+            font-size: 12px;
+            min-width: 32px;
+            transition: all 0.2s;
         }
-        .rtf-toolbar button:hover {
-            background: #3c3c3c;
+        
+        .markdown-toolbar button:hover {
+            background: #4c4c4c;
+            border-color: #666;
         }
-        .rtf-editor {
+        
+        .markdown-toolbar button:active {
+            background: #555;
+        }
+        
+        .markdown-editor-container {
+            position: relative;
+        }
+        
+        .markdown-editor-container textarea {
+            width: 100%;
             min-height: 120px;
             padding: 10px;
-            border: 2px solid #555;
-            border-radius: 8px;
+            border: 1px solid #3c3c3c;
+            border-radius: 4px;
             background: #1e1e1e;
             color: #d4d4d4;
-        }
-        .rtf-editor:focus {
+            font-family: 'Consolas', 'Monaco', monospace;
+            font-size: 13px;
+            line-height: 1.4;
             outline: none;
+            resize: vertical;
+        }
+        
+        .markdown-editor-container textarea:focus {
             border-color: #007bff;
             box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
         }
-        .rtf-editor pre, .rtf-editor code {
-            background: #111;
-            border: 1px solid #333;
-            padding: 6px 8px;
+        
+        .markdown-preview {
+            min-height: 120px;
+            padding: 10px;
+            border: 1px solid #3c3c3c;
             border-radius: 4px;
+            background: #1e1e1e;
+            color: #d4d4d4;
+            font-size: 13px;
+            line-height: 1.5;
+            overflow-y: auto;
         }
-        .rtf-editor blockquote {
+        
+        .markdown-preview h1, .markdown-preview h2, .markdown-preview h3,
+        .markdown-preview h4, .markdown-preview h5, .markdown-preview h6 {
+            color: #569cd6;
+            margin: 16px 0 8px 0;
+        }
+        
+        .markdown-preview h1 { font-size: 1.5em; }
+        .markdown-preview h2 { font-size: 1.3em; }
+        .markdown-preview h3 { font-size: 1.1em; }
+        
+        .markdown-preview p {
+            margin: 8px 0;
+        }
+        
+        .markdown-preview ul, .markdown-preview ol {
+            margin: 8px 0;
+            padding-left: 20px;
+        }
+        
+        .markdown-preview li {
+            margin: 4px 0;
+        }
+        
+        .markdown-preview blockquote {
+            margin: 8px 0;
+            padding: 8px 12px;
+            background: #2a2a2a;
             border-left: 3px solid #569cd6;
-            margin: 6px 0;
-            padding: 6px 10px;
-            color: #c5c5c5;
-            background: #262626;
+            color: #b0b0b0;
         }
         
-        /* Стили для списков в WYSIWYG редакторе */
-        .rtf-editor ol {
-            margin: 8px 0 8px 0;
-            padding-left: 1.2em;
-            list-style-type: decimal;
-            list-style-position: outside;
+        .markdown-preview code {
+            background: #2a2a2a;
+            color: #f8f8f2;
+            padding: 2px 4px;
+            border-radius: 3px;
+            font-family: 'Consolas', 'Monaco', monospace;
+            font-size: 0.9em;
         }
         
-        .rtf-editor ul {
-            margin: 8px 0 8px 0;
-            padding-left: 1.8em;
-            list-style-type: disc;
-            list-style-position: outside;
+        .markdown-preview pre {
+            background: #2a2a2a;
+            color: #f8f8f2;
+            padding: 12px;
+            border-radius: 4px;
+            overflow-x: auto;
+            border: 1px solid #444;
         }
         
-        /* Вложенные списки в редакторе */
-        .rtf-editor li ul {
-            padding-left: 1.6em;
-            list-style-type: circle;
+        .markdown-preview pre code {
+            background: none;
+            padding: 0;
+            border-radius: 0;
         }
         
-        .rtf-editor li ol {
-            padding-left: 1.4em;
-            list-style-type: lower-alpha;
+        .markdown-preview table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 8px 0;
+        }
+        
+        .markdown-preview th, .markdown-preview td {
+            border: 1px solid #444;
+            padding: 8px 12px;
+            text-align: left;
+        }
+        
+        .markdown-preview th {
+            background: #3a3a3a;
+            color: #fff;
+            font-weight: bold;
+        }
+        
+        .markdown-preview a {
+            color: #6cb5ec;
+            text-decoration: underline;
+        }
+        
+        .markdown-preview a:hover {
+            color: #764ba2;
+        }
+        
+        .markdown-preview hr {
+            border: none;
+            border-top: 1px solid #444;
+            margin: 16px 0;
         }
 
         .comments-section {
@@ -962,8 +1063,8 @@
                             {% endif %}
                         </span>
                         <div class="task-dates-right">
-                            <span class="task-date-item">📅 {{ task[11]|ru_date }}</span>
-                            <span class="task-date-item">✅ {{ task[13]|ru_date or '—' }}</span>
+                            <span class="task-date-item">📅 {{ task[12]|ru_date }}</span>
+                            <span class="task-date-item">✅ {{ task[14]|ru_date or '—' }}</span>
                         </div>
                     </div>
 
@@ -993,13 +1094,22 @@
                         </div>
                         <div class="params-right">
                             <div class="param-compact">
+                                <span class="param-label">⏰ Напоминание:</span>
+                                <span class="param-value">
+                                    {% if task[11] %}
+                                    <span class="date-highlight date-reminder" data-date="{{ task[11] }}">{{ task[11]|ru_datetime }}</span>
+                                    {% else %}
+                                    Не установлено
+                                    {% endif %}
+                                </span>
+                            </div><div class="param-compact">
                                 <span class="param-label">👤 Ответственный:</span>
                                 <span class="param-value">{{ task[7] or 'Не назначен' }}</span>
                             </div>
-                            {% if task[14] %}
+                            {% if task[15] %}
                             <div class="param-compact">
                                 <span class="param-label">🏷️ Теги:</span>
-                                <span class="param-value">{{ task[14] }}</span>
+                                <span class="param-value">{{ task[15] }}</span>
                             </div>
                             {% endif %}
                         </div>
@@ -1024,7 +1134,7 @@
                     {% if task[3] %}
                     <div class="info-item">
                         <span class="info-label">Подробное описание</span>
-                        <div class="info-value">{{ task[3]|safe }}</div>
+                        <div class="info-value">{{ task[3]|markdown|safe }}</div>
                     </div>
                     {% endif %}
                 </div>
@@ -1037,22 +1147,27 @@
                 
                 <div class="form-section">
                     <form method="POST" action="/add_comment/{{ task[0] }}" onsubmit="return syncCommentForm()">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
                         <div class="form-group">
-                            <label for="comment">Добавить комментарий</label>
-                            <div class="rtf-toolbar">
-                                <button type="button" onclick="exec('bold')"><b>B</b></button>
-                                <button type="button" onclick="exec('italic')"><i>I</i></button>
-                                <button type="button" onclick="exec('underline')"><u>U</u></button>
-                                <button type="button" onclick="exec('insertUnorderedList')">• Список</button>
-                                <button type="button" onclick="exec('insertOrderedList')">1. Список</button>
-                                <button type="button" onclick="insertTable()">📊 Таблица</button>
-                                <button type="button" onclick="toggleBlock('blockquote')">❝ Цитата</button>
-                                <button type="button" onclick="toggleBlock('pre')">{'{ }'} Код</button>
-                                <button type="button" onclick="exec('insertHorizontalRule')">— Разделитель</button>
-                                <button type="button" onclick="var url=prompt('Ссылка:','https://'); if(url) exec('createLink',url);">🔗 Ссылка</button>
+                            <label for="comment">Добавить комментарий (Markdown)</label>
+                            <div class="markdown-toolbar">
+                                <button type="button" onclick="return toggleInline('comment','**','**')" title="Жирный текст"><b>B</b></button>
+                                <button type="button" onclick="return toggleInline('comment','*','*')" title="Курсив"><i>I</i></button>
+                                <button type="button" onclick="return toggleInline('comment','~~','~~')" title="Зачёркнутый текст"><s>S</s></button>
+                                <button type="button" onclick="return toggleInline('comment','`','`')" title="Код"><code>C</code></button>
+                                <button type="button" onclick="return toggleLinePrefix('comment','## ')" title="Заголовок">H2</button>
+                                <button type="button" onclick="return toggleLinePrefix('comment','- ')" title="Список">•</button>
+                                <button type="button" onclick="return toggleLinePrefix('comment','1. ')" title="Нумерованный список">1.</button>
+                                <button type="button" onclick="return toggleLinePrefix('comment','> ')" title="Цитата">"</button>
+                                <button type="button" onclick="return toggleFence('comment','```')" title="Блок кода">{ }</button>
+                                <button type="button" onclick="insertMarkdown('[', '](url)')" title="Ссылка">🔗</button>
+                                <button type="button" onclick="insertMarkdown('---', '')" title="Разделитель">—</button>
+                                <button type="button" onclick="togglePreview()" title="Предпросмотр">👁</button>
                             </div>
-                            <div id="comment_editor" class="rtf-editor" contenteditable="true" placeholder="Введите ваш комментарий..."></div>
-                            <textarea id="comment" name="comment" rows="3" style="display:none;"></textarea>
+                            <div class="markdown-editor-container">
+                                <textarea id="comment" name="comment" rows="6" placeholder="Введите ваш комментарий в формате Markdown..."></textarea>
+                                <div id="comment_preview" class="markdown-preview" style="display:none;"></div>
+                            </div>
                         </div>
                         <button type="submit" class="btn">Добавить комментарий</button>
                     </form>
@@ -1065,7 +1180,7 @@
                             <strong>Комментарий</strong>
                             <span class="comment-date">{{ comment[3] }}</span>
                         </div>
-                        <div class="comment-text">{{ comment[2]|safe }}</div>
+                        <div class="comment-text">{{ comment[2]|markdown|safe }}</div>
                     </div>
                     {% endfor %}
                 {% else %}
@@ -1093,6 +1208,7 @@
                 {% endif %}
                 {% if not (task[15] and task[15] == 1) %}
                 <form id="editForm" method="POST" action="/update_task/{{ task[0] }}" style="display: none;" onsubmit="return syncEditForm()">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
                     <!-- Первая строка: Название задачи, Краткое описание, Приоритет Эйзенхауэра -->
                     <div class="form-grid" style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; margin-bottom: 12px;">
                         <div class="form-group">
@@ -1138,7 +1254,7 @@
                         </div>
                     </div>
                     
-                    <!-- Третья строка: Дата взятия в работу, Дата выполнения, Теги -->
+                    <!-- Третья строка: Дата взятия в работу, Дата выполнения, Напоминание -->
                     <div class="form-grid" style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; margin-bottom: 12px;">
                         <div class="form-group">
                             <label for="scheduled_date">Дата взятия в работу</label>
@@ -1149,10 +1265,29 @@
                             <input type="date" id="due_date" name="due_date" value="{{ task[10] or '' }}">
                         </div>
                         <div class="form-group">
+                            <label for="reminder_time">Напоминание</label>
+                            <input type="datetime-local" id="reminder_time" name="reminder_time" value="{{ task[11] or '' }}">
+                            <small class="form-text text-muted">Установите точное время, когда хотите получить напоминание о задаче</small>
+                        </div>
+                    </div>
+                    
+                    <!-- Четвертая строка: Связанные треды и ссылки, Теги -->
+                    <div class="form-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px;">
+                        <div class="form-group">
+                            <label for="related_threads">Связанные треды и ссылки</label>
+                            <div class="threads-input-container">
+                                <div class="threads-input-wrapper">
+                                    <input type="text" id="related_threads" name="related_threads" value="{{ task[8] or '' }}" placeholder="Введите ссылку и нажмите Enter..." autocomplete="off">
+                                    <div id="threadsDisplay" class="threads-display"></div>
+                                </div>
+                                <small class="form-text">Можно добавить несколько ссылок: на треды, форумы, новости и т.д.</small>
+                            </div>
+                        </div>
+                        <div class="form-group">
                             <label for="tags">Теги</label>
                             <div class="tags-input-container">
                                 <div class="tags-input-wrapper">
-                                    <input type="text" id="tags" name="tags" value="{{ task[14] or '' }}" placeholder="Введите теги..." style="display: none;">
+                                    <input type="text" id="tags" name="tags" value="{{ task[15] or '' }}" placeholder="Введите теги..." style="display: none;">
                                     <div id="tagsDisplay" class="tags-display"></div>
                                     <input type="text" id="tagsInput" placeholder="Введите тег и нажмите Enter..." autocomplete="off">
                                 </div>
@@ -1161,35 +1296,27 @@
                         </div>
                     </div>
                     
-                    <!-- Связанные треды (множественные ссылки) -->
-                    <div class="form-group">
-                        <label for="related_threads">Связанные треды и ссылки</label>
-                        <div class="threads-input-container">
-                            <div class="threads-input-wrapper">
-                                <input type="text" id="related_threads" name="related_threads" value="{{ task[8] or '' }}" placeholder="Введите ссылку и нажмите Enter..." autocomplete="off">
-                                <div id="threadsDisplay" class="threads-display"></div>
-                            </div>
-                            <small class="form-text">Можно добавить несколько ссылок: на треды, форумы, новости и т.д.</small>
-                        </div>
-                    </div>
-                    
                     <!-- Подробное описание -->
                     <div class="form-group">
-                        <label for="full_description">Подробное описание</label>
-                        <div class="rtf-toolbar">
-                            <button type="button" onclick="exec('bold')"><b>B</b></button>
-                            <button type="button" onclick="exec('italic')"><i>I</i></button>
-                            <button type="button" onclick="exec('underline')"><u>U</u></button>
-                            <button type="button" onclick="exec('insertUnorderedList')">• Список</button>
-                            <button type="button" onclick="exec('insertOrderedList')">1. Список</button>
-                            <button type="button" onclick="insertTable()">📊 Таблица</button>
-                            <button type="button" onclick="toggleBlock('blockquote')">❝ Цитата</button>
-                            <button type="button" onclick="toggleBlock('pre')">{'{ }'} Код</button>
-                            <button type="button" onclick="exec('insertHorizontalRule')">— Разделитель</button>
-                            <button type="button" onclick="var url=prompt('Ссылка:','https://'); if(url) exec('createLink',url);">🔗 Ссылка</button>
+                        <label for="full_description">Подробное описание (Markdown)</label>
+                        <div class="markdown-toolbar">
+                            <button type="button" onclick="return toggleInline('full_description','**','**')" title="Жирный текст"><b>B</b></button>
+                            <button type="button" onclick="return toggleInline('full_description','*','*')" title="Курсив"><i>I</i></button>
+                            <button type="button" onclick="return toggleInline('full_description','~~','~~')" title="Зачёркнутый текст"><s>S</s></button>
+                            <button type="button" onclick="return toggleInline('full_description','`','`')" title="Код"><code>C</code></button>
+                            <button type="button" onclick="return toggleLinePrefix('full_description','## ')" title="Заголовок">H2</button>
+                            <button type="button" onclick="return toggleLinePrefix('full_description','- ')" title="Список">•</button>
+                            <button type="button" onclick="return toggleLinePrefix('full_description','1. ')" title="Нумерованный список">1.</button>
+                            <button type="button" onclick="return toggleLinePrefix('full_description','> ')" title="Цитата">"</button>
+                            <button type="button" onclick="return toggleFence('full_description','```')" title="Блок кода">{ }</button>
+                            <button type="button" onclick="insertMarkdownDescription('[', '](url)')" title="Ссылка">🔗</button>
+                            <button type="button" onclick="insertMarkdownDescription('---', '')" title="Разделитель">—</button>
+                            <button type="button" onclick="toggleDescriptionPreview()" title="Предпросмотр">👁</button>
                         </div>
-                        <div id="full_description_editor" class="rtf-editor" contenteditable="true">{{ (task[3] or '')|safe }}</div>
-                        <textarea id="full_description" name="full_description" rows="3" style="display:none;"></textarea>
+                        <div class="markdown-editor-container">
+                            <textarea id="full_description" name="full_description" rows="6" placeholder="Введите подробное описание в формате Markdown...">{{ task[3] or '' }}</textarea>
+                            <div id="full_description_preview" class="markdown-preview" style="display:none;"></div>
+                        </div>
                     </div>
                     
                     <button type="submit" class="btn">Сохранить изменения</button>
@@ -1206,6 +1333,22 @@
         </div>
     </div>
 <script>
+    // Функция для получения CSRF токена
+    function getCSRFToken() {
+        const tokenInput = document.querySelector('input[name="csrf_token"]');
+        if (tokenInput) {
+            return tokenInput.value;
+        }
+        const cookies = document.cookie.split(';');
+        for (let cookie of cookies) {
+            const [name, value] = cookie.trim().split('=');
+            if (name === 'csrftoken') {
+                return decodeURIComponent(value);
+            }
+        }
+        return '';
+    }
+
 function toggleEdit(){
   const form = document.getElementById('editForm');
   const icon = document.getElementById('editToggleIcon');
@@ -1218,67 +1361,82 @@ function toggleEdit(){
   }
 }
 
-function exec(cmd, value){
-  document.execCommand(cmd, false, value || null);
-}
 
-function getSelectionBlockElement(){
-  const sel = window.getSelection();
-  if(!sel || sel.rangeCount === 0) return null;
-  let node = sel.getRangeAt(0).commonAncestorContainer;
-  if(node.nodeType === 3) node = node.parentNode;
-  while(node && node !== document.body){
-    const tag = (node.tagName||'').toLowerCase();
-    if(['p','div','pre','blockquote','li'].includes(tag)) return node;
-    node = node.parentNode;
-  }
-  return null;
-}
-
-function toggleBlock(tag){
-  const block = getSelectionBlockElement();
-  if(block && block.tagName && block.tagName.toLowerCase() === tag){
-    // снять формат: заменить на <p>
-    document.execCommand('formatBlock', false, 'p');
-  } else {
-    document.execCommand('formatBlock', false, tag);
-  }
-}
-
-function insertTable(){
-  const rows = prompt('Количество строк:', '3');
-  const cols = prompt('Количество столбцов:', '3');
-  
-  if(rows && cols && !isNaN(rows) && !isNaN(cols) && rows > 0 && cols > 0){
-    let tableHTML = '<table><tbody>';
+// Markdown функции для описания задач
+function insertMarkdownDescription(before, after) {
+    const textarea = document.getElementById('full_description');
+    if (!textarea) return false;
     
-    // Создаем заголовки
-    tableHTML += '<tr>';
-    for(let i = 0; i < cols; i++){
-      tableHTML += '<th>Заголовок ' + (i + 1) + '</th>';
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+    const selectedText = textarea.value.substring(start, end);
+    
+    const newText = before + selectedText + after;
+    textarea.value = textarea.value.substring(0, start) + newText + textarea.value.substring(end);
+    
+    // Устанавливаем курсор после вставленного текста
+    const newCursorPos = start + before.length + selectedText.length;
+    textarea.setSelectionRange(newCursorPos, newCursorPos);
+    textarea.focus();
+    
+    // Обновляем предпросмотр если он видим
+    updateDescriptionPreview();
+}
+
+function toggleDescriptionPreview() {
+    const textarea = document.getElementById('full_description');
+    const preview = document.getElementById('full_description_preview');
+    
+    if (!textarea || !preview) return;
+    
+    if (preview.style.display === 'none') {
+        // Показываем предпросмотр
+        preview.style.display = 'block';
+        textarea.style.display = 'none';
+        updateDescriptionPreview();
+    } else {
+        // Показываем редактор
+        preview.style.display = 'none';
+        textarea.style.display = 'block';
     }
-    tableHTML += '</tr>';
+}
+
+function updateDescriptionPreview() {
+    const textarea = document.getElementById('full_description');
+    const preview = document.getElementById('full_description_preview');
     
-    // Создаем строки данных
-    for(let i = 0; i < rows - 1; i++){
-      tableHTML += '<tr>';
-      for(let j = 0; j < cols; j++){
-        tableHTML += '<td>Ячейка ' + (i + 1) + ',' + (j + 1) + '</td>';
-      }
-      tableHTML += '</tr>';
-    }
+    if (!textarea || !preview) return;
     
-    tableHTML += '</tbody></table>';
+    const markdownText = textarea.value;
     
-    document.execCommand('insertHTML', false, tableHTML);
-  }
+    // Отправляем запрос на предпросмотр
+    fetch('/markdown_preview', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCSRFToken(),
+        },
+        body: JSON.stringify({
+            markdown: markdownText
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            preview.innerHTML = data.html;
+        } else {
+            preview.innerHTML = '<p style="color: #ff6b6b;">Ошибка предпросмотра: ' + data.error + '</p>';
+        }
+    })
+    .catch(error => {
+        preview.innerHTML = '<p style="color: #ff6b6b;">Ошибка загрузки предпросмотра</p>';
+        console.error('Error:', error);
+    });
 }
 
 // Function to sync editors to textareas before form submission (for task editing)
 function syncEditorsToTextareas(){
-  const fullEd = document.getElementById('full_description_editor');
-  const fullTa = document.getElementById('full_description');
-  if(fullEd && fullTa){ fullTa.value = fullEd.innerHTML; }
+  // Больше не нужно синхронизировать, так как используем textarea напрямую
   return true;
 }
 
@@ -1289,19 +1447,292 @@ function syncEditForm(){
   return true;
 }
 
+// Markdown редактор функции
+function insertMarkdown(before, after) {
+    const textarea = document.getElementById('comment');
+    if (!textarea) return false;
+    
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+    const selectedText = textarea.value.substring(start, end);
+    
+    const newText = before + selectedText + after;
+    textarea.value = textarea.value.substring(0, start) + newText + textarea.value.substring(end);
+    
+    // Устанавливаем курсор после вставленного текста
+    const newCursorPos = start + before.length + selectedText.length;
+    textarea.setSelectionRange(newCursorPos, newCursorPos);
+    textarea.focus();
+    
+    // Обновляем предпросмотр если он видим
+    updatePreview();
+}
+
+function togglePreview() {
+    const textarea = document.getElementById('comment');
+    const preview = document.getElementById('comment_preview');
+    
+    if (!textarea || !preview) return;
+    
+    if (preview.style.display === 'none') {
+        // Показываем предпросмотр
+        preview.style.display = 'block';
+        textarea.style.display = 'none';
+        updatePreview();
+    } else {
+        // Показываем редактор
+        preview.style.display = 'none';
+        textarea.style.display = 'block';
+    }
+}
+
+function updatePreview() {
+    const textarea = document.getElementById('comment');
+    const preview = document.getElementById('comment_preview');
+    
+    if (!textarea || !preview) return;
+    
+    const markdownText = textarea.value;
+    
+    // Отправляем запрос на предпросмотр
+    fetch('/markdown_preview', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCSRFToken(),
+        },
+        body: JSON.stringify({
+            markdown: markdownText
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            preview.innerHTML = data.html;
+        } else {
+            preview.innerHTML = '<p style="color: #ff6b6b;">Ошибка предпросмотра: ' + data.error + '</p>';
+        }
+    })
+    .catch(error => {
+        preview.innerHTML = '<p style="color: #ff6b6b;">Ошибка загрузки предпросмотра</p>';
+        console.error('Error:', error);
+    });
+}
+
+function toggleInline(textareaId, before, after) {
+    const textarea = document.getElementById(textareaId);
+    if (!textarea) return false;
+
+    textarea.focus();
+
+    let start = textarea.selectionStart;
+    let end = textarea.selectionEnd;
+    if (start === null || end === null) {
+        return false;
+    }
+
+    const text = textarea.value;
+    const beforeLen = before.length;
+    const afterLen = after.length;
+
+    if (start === end) {
+        const beforeStart = start - beforeLen;
+        const afterEnd = start + afterLen;
+        const hasMarkers = beforeStart >= 0 && afterEnd <= text.length &&
+            text.substring(beforeStart, start) === before &&
+            text.substring(start, afterEnd) === after;
+
+        if (hasMarkers) {
+            textarea.value = text.substring(0, beforeStart) + text.substring(afterEnd);
+            textarea.setSelectionRange(beforeStart, beforeStart);
+        } else {
+            textarea.value = text.substring(0, start) + before + after + text.substring(end);
+            textarea.setSelectionRange(start + beforeLen, start + beforeLen);
+        }
+    } else {
+        const hasWrap = start >= beforeLen && (end + afterLen) <= text.length &&
+            text.substring(start - beforeLen, start) === before &&
+            text.substring(end, end + afterLen) === after;
+
+        if (hasWrap) {
+            textarea.value = text.substring(0, start - beforeLen) + text.substring(start, end) + text.substring(end + afterLen);
+            textarea.setSelectionRange(start - beforeLen, end - beforeLen);
+        } else {
+            textarea.value = text.substring(0, start) + before + text.substring(start, end) + after + text.substring(end);
+            textarea.setSelectionRange(start + beforeLen, end + beforeLen);
+        }
+    }
+
+    if (textareaId === 'comment') {
+        updatePreview();
+    } else if (textareaId === 'full_description') {
+        updateDescriptionPreview();
+    }
+
+    return false;
+}
+
+function toggleLinePrefix(textareaId, prefix) {
+    const textarea = document.getElementById(textareaId);
+    if (!textarea) return false;
+
+    textarea.focus();
+
+    let start = textarea.selectionStart;
+    let end = textarea.selectionEnd;
+    if (start === null || end === null) return false;
+
+    const text = textarea.value;
+    const lines = text.split('\n');
+
+    // Вычисляем смещения начала каждой строки
+    const lineOffsets = [];
+    let offset = 0;
+    for (let i = 0; i < lines.length; i++) {
+        lineOffsets.push(offset);
+        offset += lines[i].length + 1; // +1 за символ перевода строки
+    }
+
+    // Находим индексы строк, попавших в выделение
+    const findLineIndex = (pos) => {
+        if (pos <= 0) return 0;
+        for (let i = 0; i < lineOffsets.length; i++) {
+            const lineStart = lineOffsets[i];
+            const lineEnd = lineStart + lines[i].length; // без \n
+            if (pos <= lineEnd) {
+                return i;
+            }
+        }
+        return lines.length - 1;
+    };
+
+    const startLine = findLineIndex(start);
+    const endLine = findLineIndex(Math.max(end - 1, start));
+
+    const targetLines = lines.slice(startLine, endLine + 1);
+    const linesWithContent = targetLines.filter(line => line.trim().length > 0);
+    const allHavePrefix = linesWithContent.length > 0 && linesWithContent.every(line => line.startsWith(prefix));
+
+    for (let i = startLine; i <= endLine; i++) {
+        const current = lines[i];
+        if (!current.trim()) continue;
+        if (allHavePrefix) {
+            lines[i] = current.startsWith(prefix) ? current.substring(prefix.length) : current;
+        } else {
+            lines[i] = current.startsWith(prefix) ? current : prefix + current;
+        }
+    }
+
+    textarea.value = lines.join('\n');
+
+    // Пересчитываем смещения для новой версии текста
+    const newOffsets = [];
+    offset = 0;
+    for (let i = 0; i < lines.length; i++) {
+        newOffsets.push(offset);
+        offset += lines[i].length + 1;
+    }
+
+    const newStart = newOffsets[startLine] || 0;
+    const newEnd = (newOffsets[endLine] || 0) + lines[endLine].length;
+    textarea.setSelectionRange(newStart, newEnd);
+
+    if (textareaId === 'comment') {
+        updatePreview();
+    } else if (textareaId === 'full_description') {
+        updateDescriptionPreview();
+    }
+
+    return false;
+}
+
+function toggleFence(textareaId, fence) {
+    const textarea = document.getElementById(textareaId);
+    if (!textarea) return false;
+
+    textarea.focus();
+
+    let start = textarea.selectionStart;
+    let end = textarea.selectionEnd;
+    if (start === null || end === null) return false;
+
+    const text = textarea.value;
+    const fenceWithNewline = fence + '\n';
+
+    // Определяем диапазон, расширяя до границ строк
+    let lineStart = start;
+    while (lineStart > 0 && text[lineStart - 1] !== '\n') {
+        lineStart--;
+    }
+    let lineEnd = end;
+    while (lineEnd < text.length && text[lineEnd] !== '\n') {
+        lineEnd++;
+    }
+
+    const selectedBlock = text.substring(lineStart, lineEnd);
+
+    const existsFenceTop = text.substring(Math.max(0, lineStart - fence.length - 1), lineStart).endsWith(fenceWithNewline);
+    const fenceBottomPos = lineEnd + fence.length + 1;
+    const existsFenceBottom = text.substring(lineEnd, Math.min(text.length, fenceBottomPos)).startsWith('\n' + fence);
+
+    if (existsFenceTop && existsFenceBottom) {
+        // Снимаем блок
+        const before = text.substring(0, lineStart - (fence.length + 1));
+        const after = text.substring(lineEnd + fence.length + 1);
+        textarea.value = before + selectedBlock + after;
+        const newStart = lineStart - (fence.length + 1);
+        textarea.setSelectionRange(newStart, newStart + selectedBlock.length);
+    } else {
+        // Добавляем блок
+        const before = text.substring(0, lineStart);
+        const after = text.substring(lineEnd);
+        const wrapped = fence + '\n' + selectedBlock + '\n' + fence;
+        textarea.value = before + wrapped + after;
+        const newStart = lineStart + fence.length + 1;
+        const newEnd = newStart + selectedBlock.length;
+        textarea.setSelectionRange(newStart, newEnd);
+    }
+
+    if (textareaId === 'comment') {
+        updatePreview();
+    } else if (textareaId === 'full_description') {
+        updateDescriptionPreview();
+    }
+
+    return false;
+}
+
+// Автообновление предпросмотра при вводе
+document.addEventListener('DOMContentLoaded', function() {
+    const commentTextarea = document.getElementById('comment');
+    if (commentTextarea) {
+        let timeout;
+        commentTextarea.addEventListener('input', function() {
+            clearTimeout(timeout);
+            timeout = setTimeout(updatePreview, 500); // Обновляем через 500мс после остановки ввода
+        });
+    }
+    
+    const descriptionTextarea = document.getElementById('full_description');
+    if (descriptionTextarea) {
+        let timeout;
+        descriptionTextarea.addEventListener('input', function() {
+            clearTimeout(timeout);
+            timeout = setTimeout(updateDescriptionPreview, 500); // Обновляем через 500мс после остановки ввода
+        });
+    }
+});
+
 // Function to sync comment editor and validate comment form
 function syncCommentForm(){
-  const comEd = document.getElementById('comment_editor');
   const comTa = document.getElementById('comment');
-  if(comEd && comTa){
-    const html = comEd.innerHTML.trim();
-    // Если пусто (включая пустые теги), блокируем отправку
-    const text = comEd.innerText.replace(/\u200B/g,'').trim();
+  if(comTa){
+    const text = comTa.value.trim();
+    // Если пусто, блокируем отправку
     if(!text){
       alert('Введите текст комментария');
       return false;
     }
-    comTa.value = html;
   }
   return true;
 }

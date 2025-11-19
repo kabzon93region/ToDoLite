@@ -1,0 +1,103 @@
+/* Иконки ToDoLite */
+.icon {
+    display: inline-block;
+    width: 16px;
+    height: 16px;
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
+    vertical-align: middle;
+}
+
+.icon-16 { width: 16px; height: 16px; }
+.icon-24 { width: 24px; height: 24px; }
+.icon-32 { width: 32px; height: 32px; }
+.icon-48 { width: 48px; height: 48px; }
+
+/* Статусы */
+.icon-status-new { background-image: url('/api/icons/status_new'); }
+.icon-status-think { background-image: url('/api/icons/status_think'); }
+.icon-status-later { background-image: url('/api/icons/status_later'); }
+.icon-status-waiting { background-image: url('/api/icons/status_waiting'); }
+.icon-status-working { background-image: url('/api/icons/status_working'); }
+.icon-status-tracking { background-image: url('/api/icons/status_tracking'); }
+.icon-status-done { background-image: url('/api/icons/status_done'); }
+.icon-status-cancelled { background-image: url('/api/icons/status_cancelled'); }
+
+/* Приоритеты */
+.icon-priority-high { background-image: url('/api/icons/priority_high'); }
+.icon-priority-medium { background-image: url('/api/icons/priority_medium'); }
+.icon-priority-low { background-image: url('/api/icons/priority_low'); }
+
+/* Режимы */
+.icon-mode-agile { background-image: url('/api/icons/mode_agile'); }
+.icon-mode-eisenhower { background-image: url('/api/icons/mode_eisenhower'); }
+.icon-mode-archive { background-image: url('/api/icons/mode_archive'); }
+
+/* Действия */
+.icon-action-add { background-image: url('/api/icons/action_add'); }
+.icon-action-edit { background-image: url('/api/icons/action_edit'); }
+.icon-action-delete { background-image: url('/api/icons/action_delete'); }
+.icon-action-archive { background-image: url('/api/icons/action_archive'); }
+.icon-action-restore { background-image: url('/api/icons/action_restore'); }
+.icon-action-view { background-image: url('/api/icons/action_view'); }
+.icon-action-done { background-image: url('/api/icons/action_done'); }
+.icon-action-search { background-image: url('/api/icons/action_search'); }
+
+/* Кнопки с иконками */
+.btn-with-icon {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.btn-with-icon .icon {
+    flex-shrink: 0;
+}
+
+/* Статусы в карточках задач */
+.task-status-icon {
+    width: 20px;
+    height: 20px;
+    margin-right: 8px;
+}
+
+/* Приоритеты в карточках задач */
+.task-priority-icon {
+    width: 18px;
+    height: 18px;
+    margin-right: 6px;
+}
+
+/* Действия в карточках задач */
+.task-action-icon {
+    width: 16px;
+    height: 16px;
+    margin-right: 4px;
+}
+
+/* Режимы в переключателе */
+.mode-icon {
+    width: 20px;
+    height: 20px;
+    margin-right: 8px;
+}
+
+/* Адаптивность */
+@media (max-width: 768px) {
+    .icon-16, .icon-24 { width: 14px; height: 14px; }
+    .icon-32 { width: 20px; height: 20px; }
+    .icon-48 { width: 24px; height: 24px; }
+    
+    .task-status-icon,
+    .task-priority-icon,
+    .task-action-icon {
+        width: 16px;
+        height: 16px;
+    }
+    
+    .mode-icon {
+        width: 18px;
+        height: 18px;
+    }
+}

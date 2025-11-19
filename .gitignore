@@ -4,6 +4,8 @@ __pycache__/
 *$py.class
 *.so
 .Python
+.cursorignore
+.cursor/
 build/
 develop-eggs/
 dist/
@@ -62,6 +64,7 @@ GITHUB_RELEASE_*.md
 RELEASE_TAGS_*.txt
 PUBLISH_INSTRUCTIONS_*.md
 create_release_*.cmd
+make_release*.py
 
 # Config files (if sensitive)
 config.json

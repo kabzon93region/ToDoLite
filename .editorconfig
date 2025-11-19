@@ -1,0 +1,43 @@
+# EditorConfig is awesome: https://EditorConfig.org
+
+# top-most EditorConfig file
+root = true
+
+# All files
+[*]
+charset = utf-8
+end_of_line = crlf
+insert_final_newline = true
+trim_trailing_whitespace = true
+
+# Python files
+[*.py]
+charset = utf-8
+end_of_line = crlf
+indent_style = space
+indent_size = 4
+insert_final_newline = true
+trim_trailing_whitespace = true
+
+# Markdown files
+[*.md]
+charset = utf-8
+end_of_line = crlf
+trim_trailing_whitespace = false
+
+# JSON files
+[*.json]
+charset = utf-8
+end_of_line = crlf
+indent_style = space
+indent_size = 2
+
+# Batch files
+[*.cmd]
+charset = utf-8
+end_of_line = crlf
+
+# Text files
+[*.txt]
+charset = utf-8
+end_of_line = crlf

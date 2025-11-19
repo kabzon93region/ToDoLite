@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Архив задач - ToDoLite</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='todolite_icons.css') }}">
     <style>
         * {
             margin: 0;
@@ -207,6 +208,95 @@
             color: #c5c5c5;
         }
 
+        .filters {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            flex-wrap: wrap;
+            margin-bottom: 20px;
+            padding: 15px;
+            background: #2d2d30;
+            border-radius: 8px;
+            border: 1px solid #3c3c3c;
+        }
+        
+        .filter-select, .filter-input, .filter-search {
+            background: #252526;
+            border: 1px solid #3c3c3c;
+            color: #d4d4d4;
+            padding: 6px 10px;
+            border-radius: 4px;
+            font-size: 12px;
+        }
+        
+        .filter-select:focus, .filter-input:focus, .filter-search:focus {
+            outline: none;
+            border-color: #569cd6;
+        }
+        
+        .filter-input {
+            min-width: 150px;
+        }
+        
+        .filter-search {
+            min-width: 200px;
+            flex-grow: 1;
+        }
+        
+        .filter-search::placeholder {
+            color: #6c757d;
+        }
+        
+        .filter-btn {
+            background: #569cd6;
+            border: 1px solid #569cd6;
+            color: #1e1e1e;
+            padding: 6px 12px;
+            border-radius: 4px;
+            font-size: 12px;
+            cursor: pointer;
+            transition: background 0.2s;
+            font-weight: bold;
+        }
+        
+        .filter-btn:hover {
+            background: #4a8bc2;
+        }
+        
+        .selected-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+            margin-top: 5px;
+            width: 100%;
+        }
+        
+        .tag-chip {
+            background: #3c3c3c;
+            color: #d4d4d4;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 11px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        
+        .tag-remove {
+            background: none;
+            border: none;
+            color: #d4d4d4;
+            cursor: pointer;
+            font-size: 16px;
+            padding: 0;
+            margin-left: 5px;
+            line-height: 1;
+        }
+        
+        .tag-remove:hover {
+            color: #f44336;
+        }
+
         @media (max-width: 768px) {
             .container {
                 margin: 10px;
@@ -240,14 +330,42 @@
 
         <div class="archive-stats">
             <h3>📊 Статистика архива</h3>
-            <p><strong>Всего архивированных задач:</strong> {{ tasks|length }}</p>
+            <p><strong>Всего архивированных задач:</strong> <span id="totalTasks">{{ tasks|length }}</span></p>
             <p><strong>Выполненных:</strong> {{ tasks|selectattr('4', 'equalto', 'done')|list|length }}</p>
             <p><strong>Отмененных:</strong> {{ tasks|selectattr('4', 'equalto', 'cancelled')|list|length }}</p>
+            <p><strong>Отображается:</strong> <span id="visibleTasks">{{ tasks|length }}</span></p>
+        </div>
+
+        <div class="filters">
+            <input type="text" id="searchFilter" class="filter-search" placeholder="🔍 Поиск по тексту...">
+            <select id="statusFilter" class="filter-select">
+                <option value="">Все статусы</option>
+                <option value="done">✅ Выполнено</option>
+                <option value="cancelled">❌ Отменено</option>
+            </select>
+            <select id="priorityFilter" class="filter-select">
+                <option value="">Все приоритеты</option>
+                <option value="high">🔥 Высокий</option>
+                <option value="medium">⚡ Средний</option>
+                <option value="low">📋 Низкий</option>
+            </select>
+            <select id="tagsSelect" class="filter-select">
+                <option value="">Выберите тег</option>
+            </select>
+            <button type="button" id="addTagBtn" class="filter-btn">+</button>
+            <div id="selectedTags" class="selected-tags"></div>
         </div>
 
         {% if tasks %}
             {% for task in tasks %}
-            <div class="task-card">
+            <div class="task-card" 
+                 data-status="{{ task[4] }}" 
+                 data-priority="{{ task[5] }}"
+                 data-title="{{ task[1]|e }}"
+                 data-short-description="{{ (task[2] or '')|e }}"
+                 data-full-description="{{ (task[3] or '')|e }}"
+                 data-tags="{{ (task[15] or '')|e }}"
+                 data-comments="{{ (task[19] if task|length > 19 else '')|e }}">
                 <div class="task-header">
                     <div>
                         <div class="task-title">{{ task[1] }}</div>
@@ -279,9 +397,9 @@
                     {% if task[10] %}
                     <span>⏰ Срок: {{ task[10]|ru_date }}</span>
                     {% endif %}
-                    <span>📅 Создано: {{ task[11]|ru_date }}</span>
-                    {% if task[13] %}
-                    <span>✅ Завершено: {{ task[13]|ru_date }}</span>
+                    <span>📅 Создано: {{ task[12]|ru_date }}</span>
+                    {% if task[14] %}
+                    <span>✅ Завершено: {{ task[14]|ru_date }}</span>
                     {% endif %}
                 </div>
 
@@ -291,24 +409,24 @@
                 </div>
                 {% endif %}
 
-                {% if task[14] %}
+                {% if task[15] %}
                 <div class="task-meta">
-                    <span>🏷️ {{ task[14] }}</span>
+                    <span>🏷️ {{ task[15] }}</span>
                 </div>
                 {% endif %}
 
                 <div class="archived-info">
                     <strong>📦 Архивировано:</strong> 
-                    {% if task[16] %}
-                        {{ task[16]|ru_date }}
+                    {% if task[17] %}
+                        {{ task[17]|ru_date }}
                     {% else %}
                         Дата неизвестна
                     {% endif %}
-                    {% if task[17] %}
+                    {% if task[18] %}
                         (из статуса: 
-                        {% if task[17] == 'done' %}Выполнено
-                        {% elif task[17] == 'cancelled' %}Отменено
-                        {% else %}{{ task[17] }}
+                        {% if task[18] == 'done' %}Выполнено
+                        {% elif task[18] == 'cancelled' %}Отменено
+                        {% else %}{{ task[18] }}
                         {% endif %})
                     {% endif %}
                 </div>
@@ -316,7 +434,7 @@
                 <div class="task-actions">
                     <a href="/task/{{ task[0] }}" class="btn">👁️ Просмотр</a>
                     <a href="/restore_task/{{ task[0] }}" class="btn btn-success" 
-                       onclick="return confirm('Восстановить задачу в статус {{ task[17] or task[4] }}?')">
+                       onclick="return confirm('Восстановить задачу в статус {{ task[18] or task[4] }}?')">
                         🔄 Восстановить
                     </a>
                 </div>
@@ -330,5 +448,179 @@
             </div>
         {% endif %}
     </div>
+
+    <script>
+        // Filtering functionality for archive
+        let allTasks = [];
+        let availableTags = [];
+        let selectedTags = [];
+        
+        function loadAvailableTags() {
+            fetch('/api/tags')
+                .then(response => response.json())
+                .then(data => {
+                    availableTags = data.tags || [];
+                    populateTagsSelect();
+                })
+                .catch(error => {
+                    console.error('Error loading tags:', error);
+                    availableTags = [];
+                });
+        }
+        
+        function populateTagsSelect() {
+            const tagsSelect = document.getElementById('tagsSelect');
+            if (!tagsSelect) return;
+            
+            tagsSelect.innerHTML = '<option value="">Выберите тег</option>';
+            availableTags.forEach(tag => {
+                const option = document.createElement('option');
+                option.value = tag;
+                option.textContent = `#${tag}`;
+                tagsSelect.appendChild(option);
+            });
+        }
+        
+        function setupTagsFilter() {
+            const tagsSelect = document.getElementById('tagsSelect');
+            const addTagBtn = document.getElementById('addTagBtn');
+            const selectedTagsDiv = document.getElementById('selectedTags');
+            
+            if (!tagsSelect || !addTagBtn || !selectedTagsDiv) {
+                console.error('Tags filter elements not found');
+                return;
+            }
+            
+            addTagBtn.addEventListener('click', function() {
+                const selectedTag = tagsSelect.value;
+                if (selectedTag && !selectedTags.includes(selectedTag)) {
+                    selectedTags.push(selectedTag);
+                    updateSelectedTagsDisplay();
+                    applyFilters();
+                }
+            });
+            
+            function updateSelectedTagsDisplay() {
+                selectedTagsDiv.innerHTML = '';
+                selectedTags.forEach(tag => {
+                    const chip = document.createElement('div');
+                    chip.className = 'tag-chip';
+                    chip.innerHTML = `
+                        #${tag}
+                        <button class="tag-remove" onclick="removeTag('${tag}')">×</button>
+                    `;
+                    selectedTagsDiv.appendChild(chip);
+                });
+            }
+            
+            window.removeTag = function(tag) {
+                const index = selectedTags.indexOf(tag);
+                if (index > -1) {
+                    selectedTags.splice(index, 1);
+                    updateSelectedTagsDisplay();
+                    applyFilters();
+                }
+            };
+        }
+        
+        function applyFilters() {
+            const statusFilter = document.getElementById('statusFilter').value;
+            const priorityFilter = document.getElementById('priorityFilter').value;
+            const searchFilter = document.getElementById('searchFilter').value.toLowerCase().trim();
+            
+            let visibleCount = 0;
+            
+            allTasks.forEach(task => {
+                let show = true;
+                
+                // Status filter
+                if (statusFilter && task.status !== statusFilter) {
+                    show = false;
+                }
+                
+                // Priority filter
+                if (priorityFilter && task.priority !== priorityFilter) {
+                    show = false;
+                }
+                
+                // Tags filter
+                if (selectedTags.length > 0) {
+                    const taskTags = task.tags.toLowerCase();
+                    const hasAnySelectedTag = selectedTags.some(selectedTag => 
+                        taskTags.includes(selectedTag.toLowerCase())
+                    );
+                    if (!hasAnySelectedTag) {
+                        show = false;
+                    }
+                }
+                
+                // Text search filter
+                if (searchFilter) {
+                    const searchableText = [
+                        task.title,
+                        task.shortDescription,
+                        task.fullDescription,
+                        task.comments,
+                        task.tags
+                    ].join(' ').toLowerCase();
+                    
+                    if (!searchableText.includes(searchFilter)) {
+                        show = false;
+                    }
+                }
+                
+                if (show) {
+                    visibleCount++;
+                }
+                
+                task.element.style.display = show ? 'block' : 'none';
+            });
+            
+            // Update visible count
+            const visibleTasksSpan = document.getElementById('visibleTasks');
+            if (visibleTasksSpan) {
+                visibleTasksSpan.textContent = visibleCount;
+            }
+        }
+        
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            // Collect all task cards
+            const taskCards = document.querySelectorAll('.task-card');
+            allTasks = Array.from(taskCards).map(card => {
+                return {
+                    element: card,
+                    status: card.dataset.status || '',
+                    priority: card.dataset.priority || '',
+                    tags: card.dataset.tags || '',
+                    title: card.dataset.title || '',
+                    shortDescription: card.dataset.shortDescription || '',
+                    fullDescription: card.dataset.fullDescription || '',
+                    comments: card.dataset.comments || ''
+                };
+            });
+            
+            // Load available tags
+            loadAvailableTags();
+            
+            // Set up tags filter
+            setupTagsFilter();
+            
+            // Set up filter event listeners
+            const searchFilter = document.getElementById('searchFilter');
+            const statusFilter = document.getElementById('statusFilter');
+            const priorityFilter = document.getElementById('priorityFilter');
+            
+            if (searchFilter) {
+                searchFilter.addEventListener('input', applyFilters);
+            }
+            if (statusFilter) {
+                statusFilter.addEventListener('change', applyFilters);
+            }
+            if (priorityFilter) {
+                priorityFilter.addEventListener('change', applyFilters);
+            }
+        });
+    </script>
 </body>
 </html>

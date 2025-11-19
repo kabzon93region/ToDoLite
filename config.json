@@ -1,4 +1,7 @@
-﻿{
+{
+  "version": "1.5.1",
+  "version_date": "2025-10-13",
+  "version_type": "patch",
   "statuses_order": [
     "new",
     "later",
@@ -10,14 +13,18 @@
     "cancelled"
   ],
   "statuses_labels": {
-    "new": "🆕 Новая",
-    "later": "⏰ Ближайшие",
-    "tracking": "👀 Отслеживаем",
-    "working": "⚡ В работе",
-    "waiting": "⏳ Ждемс",
-    "think": "🤔 На подумать",
+    "new": "📝 Новые",
+    "later": "📅 Завтра",
+    "tracking": "👁️ Отслеживаем",
+    "working": "🔥 Сегодня",
+    "waiting": "📆 На неделе",
+    "think": "🔮 Далекие",
     "done": "✅ Готово",
     "cancelled": "❌ Отменено"
+  },
+  "auto_migration": {
+    "enabled": true,
+    "interval_minutes": 30
   },
   "eisenhower_order": [
     "urgent_important",
@@ -30,5 +37,27 @@
     "urgent_not_important": "⚡ Срочные не важные",
     "not_urgent_important": "⭐ Важные не срочные",
     "not_urgent_not_important": "📋 Не важные не срочные"
+  },
+  "auth": {
+    "enabled": false,
+    "users": {
+      "admin": "password123"
+    }
+  },
+  "backup": {
+    "enabled": true,
+    "interval_hours": 1,
+    "destinations": [
+      "C:\\Backups\\ToDoLite",
+      "D:\\Backups\\ToDoLite",
+      "C:\\Users\\%USERNAME%\\Documents\\ToDoLite_Backups"
+    ],
+    "primary_paths": [
+      "C:\\Backups\\ToDoLite",
+      "D:\\Backups\\ToDoLite"
+    ],
+    "fallback_path": "C:\\Users\\%USERNAME%\\Documents\\ToDoLite_Backups",
+    "max_backups": 10,
+    "compress": true
   }
 }
