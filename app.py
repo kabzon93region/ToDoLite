@@ -891,7 +891,7 @@ def mark_done_route(task_id):
     """Отметить задачу как выполненную"""
     logger.http(f"Запрос отметки задачи ID {task_id} как выполненной", "HTTP_GET")
     logger.task(f"Отметка задачи ID {task_id} как выполненной", "MARK_DONE")
-    
+
     db = get_db_manager()
     db.execute_query("""
         UPDATE tasks SET 
@@ -900,8 +900,26 @@ def mark_done_route(task_id):
             updated_at = CURRENT_TIMESTAMP
         WHERE id = ?
     """, (task_id,))
-    
+
     logger.success(f"Задача ID {task_id} отмечена как выполненная", "MARK_DONE")
+    return redirect(url_for('view_task', task_id=task_id))
+
+
+@app.route('/mark_cancel/<int:task_id>')
+def mark_cancel_route(task_id):
+    """Отметить задачу как отменённую"""
+    logger.http(f"Запрос отметки задачи ID {task_id} как отменённой", "HTTP_GET")
+    logger.task(f"Отметка задачи ID {task_id} как отменённой", "MARK_CANCEL")
+
+    db = get_db_manager()
+    db.execute_query("""
+        UPDATE tasks SET 
+            status = 'cancelled',
+            updated_at = CURRENT_TIMESTAMP
+        WHERE id = ?
+    """, (task_id,))
+
+    logger.success(f"Задача ID {task_id} отмечена как отменённая", "MARK_CANCEL")
     return redirect(url_for('view_task', task_id=task_id))
 
 @app.route('/update_task_status', methods=['POST'])
@@ -938,6 +956,68 @@ def update_task_status():
     _get_cached_tags.cache_clear()
     
     logger.success(f"Статус задачи ID {task_id} обновлен на '{new_status}'", "STATUS_UPDATE")
+    return {'success': True}
+
+
+@app.route('/api/update_priority', methods=['POST'])
+@limiter.limit("30 per minute")
+def api_update_priority():
+    """API endpoint для обновления приоритета задачи"""
+    logger.http("API запрос обновления приоритета задачи", "API_POST")
+
+    data = request.get_json()
+    task_id = data.get('task_id')
+    new_priority = data.get('priority')
+
+    if not task_id or new_priority not in ('low', 'medium', 'high'):
+        logger.error(f"Неверные данные API: task_id={task_id}, priority={new_priority}", "API_ERROR")
+        return {'success': False, 'error': 'Missing or invalid task_id/priority'}, 400
+
+    db = get_db_manager()
+    db.execute_query("""
+        UPDATE tasks SET 
+            priority = ?,
+            updated_at = CURRENT_TIMESTAMP
+        WHERE id = ?
+    """, (new_priority, task_id))
+
+    _get_cached_tags.cache_clear()
+
+    logger.success(f"Приоритет задачи ID {task_id} обновлён на '{new_priority}'", "PRIORITY_UPDATE")
+    return {'success': True}
+
+
+@app.route('/api/update_eisenhower', methods=['POST'])
+@limiter.limit("30 per minute")
+def api_update_eisenhower():
+    """API endpoint для обновления категории Эйзенхауэра"""
+    logger.http("API запрос обновления категории Эйзенхауэра", "API_POST")
+
+    data = request.get_json()
+    task_id = data.get('task_id')
+    new_eisenhower = data.get('eisenhower')
+
+    allowed = {
+        'urgent_important',
+        'urgent_not_important',
+        'not_urgent_important',
+        'not_urgent_not_important',
+    }
+    if not task_id or new_eisenhower not in allowed:
+        logger.error(f"Неверные данные API: task_id={task_id}, eisenhower={new_eisenhower}", "API_ERROR")
+        return {'success': False, 'error': 'Missing or invalid task_id/eisenhower'}, 400
+
+    db = get_db_manager()
+    db.execute_query("""
+        UPDATE tasks SET 
+            eisenhower_priority = ?,
+            updated_at = CURRENT_TIMESTAMP
+        WHERE id = ?
+    """, (new_eisenhower, task_id))
+
+    _get_cached_tags.cache_clear()
+
+    logger.success(f"Категория Эйзенхауэра задачи ID {task_id} обновлена на '{new_eisenhower}'", "EISENHOWER_UPDATE")
     return {'success': True}
 
 @lru_cache(maxsize=128)

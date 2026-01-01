@@ -446,7 +446,7 @@
             border: 1px solid #3c3c3c;
             border-radius: 4px;
         }
-        
+
         .markdown-toolbar button {
             background: #3c3c3c;
             color: #d4d4d4;
@@ -458,12 +458,12 @@
             min-width: 32px;
             transition: all 0.2s;
         }
-        
+
         .markdown-toolbar button:hover {
             background: #4c4c4c;
             border-color: #666;
         }
-        
+
         .markdown-toolbar button:active {
             background: #555;
         }
@@ -471,7 +471,7 @@
         .markdown-editor-container {
             position: relative;
         }
-        
+
         .markdown-editor-container textarea {
             width: 100%;
             min-height: 120px;
@@ -503,17 +503,17 @@
             line-height: 1.5;
             overflow-y: auto;
         }
-        
+
         .markdown-preview h1, .markdown-preview h2, .markdown-preview h3,
         .markdown-preview h4, .markdown-preview h5, .markdown-preview h6 {
             color: #569cd6;
             margin: 16px 0 8px 0;
         }
-        
+
         .markdown-preview h1 { font-size: 1.5em; }
         .markdown-preview h2 { font-size: 1.3em; }
         .markdown-preview h3 { font-size: 1.1em; }
-        
+
         .markdown-preview p {
             margin: 8px 0;
         }
@@ -526,7 +526,7 @@
         .markdown-preview li {
             margin: 4px 0;
         }
-        
+
         .markdown-preview blockquote {
             margin: 8px 0;
             padding: 8px 12px;
@@ -562,7 +562,7 @@
         .markdown-preview a:hover {
             text-decoration: underline;
         }
-        
+
         .markdown-preview table {
             border-collapse: collapse;
             width: 100%;
@@ -580,7 +580,7 @@
             background: #2a2a2a;
             font-weight: bold;
         }
-        
+
         .markdown-preview hr {
             border: none;
             border-top: 1px solid #3c3c3c;
@@ -672,7 +672,12 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 8px;
+            margin-bottom: 0;
+        }
+
+        /* Нижняя строка мета‑информации (ответственный/тред) в карточке */
+        .task-card > .task-meta {
+            margin-bottom: 6px;
         }
         
         .btn-secondary {
@@ -690,7 +695,7 @@
         }
 
         .task-badge {
-            padding: 3px 6px;
+            padding: 1px 6px;
             border-radius: 12px;
             font-size: 0.7em;
             font-weight: bold;
@@ -1178,7 +1183,7 @@
                         <button type="button" onclick="insertMarkdownDescription('[', '](url)')" title="Ссылка">🔗</button>
                         <button type="button" onclick="insertMarkdownDescription('---', '')" title="Разделитель">—</button>
                         <button type="button" onclick="toggleDescriptionPreview()" title="Предпросмотр">👁</button>
-                    </div>
+                        </div>
                     <div class="markdown-editor-container">
                         <textarea id="full_description" name="full_description" rows="6" placeholder="Введите подробное описание в формате Markdown..."></textarea>
                         <div id="full_description_preview" class="markdown-preview" style="display:none;"></div>
@@ -1609,6 +1614,217 @@
             });
         });
 
+        // --- Кликабельные плашки статуса / приоритета / Эйзенхауэра ---
+
+        // Опции статусов берём из конфигурации
+        const STATUS_OPTIONS = [
+            {% for status in cfg.statuses_order %}
+            {
+                value: "{{ status }}",
+                label: "{{ cfg.statuses_labels[status] if cfg.statuses_labels and status in cfg.statuses_labels else status }}"
+            }{% if not loop.last %},{% endif %}
+            {% endfor %}
+        ];
+
+        const PRIORITY_OPTIONS = [
+            { value: 'high', label: 'Высокий' },
+            { value: 'medium', label: 'Средний' },
+            { value: 'low', label: 'Низкий' },
+        ];
+
+        const EISENHOWER_OPTIONS = [
+            { value: 'urgent_important', label: '🔥 Важные и срочные' },
+            { value: 'urgent_not_important', label: '⚡ Срочные не важные' },
+            { value: 'not_urgent_important', label: '⭐ Важные не срочные' },
+            { value: 'not_urgent_not_important', label: '📋 Не важные не срочные' },
+        ];
+
+        let badgeMenuElement = null;
+
+        function closeBadgeMenu() {
+            if (badgeMenuElement && badgeMenuElement.parentNode) {
+                badgeMenuElement.parentNode.removeChild(badgeMenuElement);
+            }
+            badgeMenuElement = null;
+        }
+
+        function openBadgeMenu(target, type, currentValue) {
+            closeBadgeMenu();
+
+            let options = [];
+            if (type === 'status') {
+                options = STATUS_OPTIONS;
+            } else if (type === 'priority') {
+                options = PRIORITY_OPTIONS;
+            } else if (type === 'eisenhower') {
+                options = EISENHOWER_OPTIONS;
+            }
+            if (!options.length) return;
+
+            const rect = target.getBoundingClientRect();
+
+            const menu = document.createElement('div');
+            menu.className = 'badge-menu';
+            menu.style.position = 'fixed';
+            menu.style.left = rect.left + 'px';
+            menu.style.top = (rect.bottom + 4) + 'px';
+            menu.style.background = '#2d2d30';
+            menu.style.border = '1px solid #3c3c3c';
+            menu.style.borderRadius = '4px';
+            menu.style.padding = '4px 0';
+            menu.style.zIndex = 2000;
+            menu.style.minWidth = '160px';
+            menu.style.boxShadow = '0 4px 10px rgba(0,0,0,0.5)';
+
+            options.forEach(opt => {
+                const item = document.createElement('div');
+                item.textContent = opt.label;
+                item.dataset.value = opt.value;
+                item.style.padding = '4px 10px';
+                item.style.fontSize = '12px';
+                item.style.cursor = 'pointer';
+                item.style.whiteSpace = 'nowrap';
+                if (opt.value === currentValue) {
+                    item.style.background = '#3c3c3c';
+                    item.style.fontWeight = 'bold';
+                }
+                item.addEventListener('mouseenter', () => {
+                    item.style.background = '#404040';
+                });
+                item.addEventListener('mouseleave', () => {
+                    item.style.background = opt.value === currentValue ? '#3c3c3c' : 'transparent';
+                });
+                item.addEventListener('click', () => {
+                    const taskCard = target.closest('.task-card');
+                    if (!taskCard) return;
+                    const taskId = parseInt(taskCard.dataset.taskId);
+                    if (!taskId) return;
+
+                    if (type === 'status') {
+                        changeTaskStatus(taskId, opt.value);
+                    } else if (type === 'priority') {
+                        changeTaskPriority(taskId, opt.value);
+                    } else if (type === 'eisenhower') {
+                        changeTaskEisenhower(taskId, opt.value);
+                    }
+
+                    closeBadgeMenu();
+                });
+                menu.appendChild(item);
+            });
+
+            document.body.appendChild(menu);
+            badgeMenuElement = menu;
+        }
+
+        function changeTaskStatus(taskId, newStatus) {
+            fetch('/update_task_status', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCSRFToken(),
+                },
+                body: JSON.stringify({
+                    task_id: taskId,
+                    status: newStatus
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    window.location.reload();
+                } else {
+                    console.error('Failed to update task status:', data.error);
+                    alert('Ошибка при обновлении статуса задачи');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Ошибка при обновлении статуса задачи');
+            });
+        }
+
+        function changeTaskPriority(taskId, newPriority) {
+            fetch('/api/update_priority', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCSRFToken(),
+                },
+                body: JSON.stringify({
+                    task_id: taskId,
+                    priority: newPriority
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    window.location.reload();
+                } else {
+                    console.error('Failed to update task priority:', data.error);
+                    alert('Ошибка при обновлении приоритета задачи');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Ошибка при обновлении приоритета задачи');
+            });
+        }
+
+        function changeTaskEisenhower(taskId, newEisenhower) {
+            fetch('/api/update_eisenhower', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCSRFToken(),
+                },
+                body: JSON.stringify({
+                    task_id: taskId,
+                    eisenhower: newEisenhower
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    window.location.reload();
+                } else {
+                    console.error('Failed to update eisenhower category:', data.error);
+                    alert('Ошибка при обновлении категории Эйзенхауэра');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Ошибка при обновлении категории Эйзенхауэра');
+            });
+        }
+
+        // Навешиваем обработчики клика на плашки после загрузки DOM
+        document.addEventListener('DOMContentLoaded', function () {
+            document.querySelectorAll('.task-card .task-badge[data-badge-type]').forEach(badge => {
+                badge.style.cursor = 'pointer';
+                badge.addEventListener('click', function (e) {
+                    e.stopPropagation();
+                    const type = this.dataset.badgeType;
+                    let current = '';
+                    if (type === 'status') {
+                        current = this.dataset.status;
+                    } else if (type === 'priority') {
+                        current = this.dataset.priority;
+                    } else if (type === 'eisenhower') {
+                        current = this.dataset.eisenhower;
+                    }
+                    openBadgeMenu(this, type, current);
+                });
+            });
+
+            // Закрытие меню по клику вне
+            document.addEventListener('click', function (e) {
+                if (badgeMenuElement && !badgeMenuElement.contains(e.target)) {
+                    closeBadgeMenu();
+                }
+            });
+        });
+
         function handleDragStart(e) {
             e.target.classList.add('dragging');
             e.dataTransfer.effectAllowed = 'move';
@@ -1977,7 +2193,7 @@
                     preview.innerHTML = data.html;
                 } else {
                     preview.innerHTML = '<p style="color: #ff6b6b;">Ошибка предпросмотра: ' + data.error + '</p>';
-                }
+            }
             })
             .catch(error => {
                 preview.innerHTML = '<p style="color: #ff6b6b;">Ошибка загрузки предпросмотра</p>';
@@ -2011,7 +2227,7 @@
                 if (hasMarkers) {
                     textarea.value = text.substring(0, beforeStart) + text.substring(afterEnd);
                     textarea.setSelectionRange(beforeStart, beforeStart);
-                } else {
+            } else {
                     textarea.value = text.substring(0, start) + before + after + text.substring(end);
                     textarea.setSelectionRange(start + beforeLen, start + beforeLen);
                 }
@@ -2062,7 +2278,7 @@
                 }
                 if (index < linesToToggle.length - 1) {
                     newText += '\n';
-                }
+                    }
             });
             newText += text.substring(end);
 

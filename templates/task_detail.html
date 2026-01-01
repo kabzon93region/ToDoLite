@@ -352,10 +352,22 @@
 
         .task-actions {
             display: flex;
+            justify-content: space-between;
+            align-items: center;
             gap: 10px;
             flex-wrap: wrap;
-            justify-content: flex-end;
             margin-top: 20px;
+        }
+
+        .task-actions-left,
+        .task-actions-right {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .task-actions-right {
+            margin-left: auto;
         }
 
         .btn {
@@ -1325,10 +1337,16 @@
             </div>
 
             <div class="task-actions">
-                <a href="/mark_done/{{ task[0] }}" class="btn btn-success" 
-                   onclick="return confirm('Отметить задачу как выполненную?')">Готово</a>
-                <a href="/delete_task/{{ task[0] }}" class="btn btn-danger" 
-                   onclick="return confirm('Вы уверены, что хотите удалить эту задачу?')">Удалить задачу</a>
+                <div class="task-actions-left">
+                    <a href="/mark_done/{{ task[0] }}" class="btn btn-success" 
+                       onclick="return confirm('Отметить задачу как выполненную?')">Готово</a>
+                    <a href="/mark_cancel/{{ task[0] }}" class="btn"
+                       onclick="return confirm('Отменить задачу и перенести в категорию отменённых?')">Отменить</a>
+                </div>
+                <div class="task-actions-right">
+                    <a href="/delete_task/{{ task[0] }}" class="btn btn-danger" 
+                       onclick="return confirm('Вы уверены, что хотите удалить эту задачу?')">Удалить задачу</a>
+                </div>
             </div>
         </div>
     </div>

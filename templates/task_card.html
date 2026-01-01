@@ -10,16 +10,22 @@
                 {% endif %}
             </div>
             <div class="task-meta">
-                <span class="task-badge status-plain">
+                <span class="task-badge status-plain"
+                      data-badge-type="status"
+                      data-status="{{ task[4] }}">
                     {{ cfg.statuses_labels[task[4]] if cfg.statuses_labels and task[4] in cfg.statuses_labels else task[4] }}
                 </span>
-                <span class="task-badge priority-{{ task[5] }}">
+                <span class="task-badge priority-{{ task[5] }}"
+                      data-badge-type="priority"
+                      data-priority="{{ task[5] }}">
                     {% if task[5] == 'high' %}Высокий
                     {% elif task[5] == 'medium' %}Средний
                     {% elif task[5] == 'low' %}Низкий
                     {% endif %}
                 </span>
-                <span class="task-badge eisenhower-{{ task[6] }}">
+                <span class="task-badge eisenhower-{{ task[6] }}"
+                      data-badge-type="eisenhower"
+                      data-eisenhower="{{ task[6] }}">
                     {{ cfg.eisenhower_labels[task[6]] if cfg.eisenhower_labels and task[6] in cfg.eisenhower_labels else task[6] }}
                 </span>
             </div>
