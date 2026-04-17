@@ -397,9 +397,17 @@
 
         .form-grid {
             display: grid;
-            grid-template-columns: 1fr 1fr 1fr;
+            grid-template-columns: repeat(4, 1fr);
             gap: 12px;
             margin-bottom: 12px;
+        }
+
+        .form-group--span-2 {
+            grid-column: span 2;
+        }
+
+        .form-group--span-3 {
+            grid-column: span 3;
         }
 
         .form-group {
@@ -1016,6 +1024,11 @@
             .form-grid {
                 grid-template-columns: 1fr;
             }
+
+            .form-group--span-2,
+            .form-group--span-3 {
+                grid-column: span 1;
+            }
             
             .tasks-grid {
                 grid-template-columns: 1fr;
@@ -1080,79 +1093,22 @@
             <div class="add-task-form" id="addTaskForm" style="display: none;">
             <form method="POST" action="/add_task">
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
-                <!-- Первая строка: Название задачи, Краткое описание, Приоритет Эйзенхауэра -->
-                <div class="form-grid">
+                <input type="hidden" name="assigned_to" value="">
+                <!-- Временно скрыто: «Ответственный»
                 <div class="form-group">
-                        <label for="title">Название задачи *</label>
-                    <input type="text" id="title" name="title" required>
+                    <label for="assigned_to">Ответственный</label>
+                    <input type="text" id="assigned_to" name="assigned_to">
                 </div>
-                <div class="form-group">
+                -->
+                <!-- Строка 1: четыре колонки -->
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="title">Название задачи *</label>
+                        <input type="text" id="title" name="title" required>
+                    </div>
+                    <div class="form-group">
                         <label for="short_description">Краткое описание *</label>
                         <input type="text" id="short_description" name="short_description" required>
-                </div>
-                <div class="form-group">
-                        <label for="eisenhower_priority">Приоритет Эйзенхауэра *</label>
-                        <select id="eisenhower_priority" name="eisenhower_priority" required>
-                            <option value="urgent_important">🔥 Важные и срочные</option>
-                            <option value="urgent_not_important">⚡ Срочные не важные</option>
-                            <option value="not_urgent_important">⭐ Важные не срочные</option>
-                            <option value="not_urgent_not_important" selected>📋 Не важные не срочные</option>
-                        </select>
-                    </div>
-                </div>
-                
-                <!-- Вторая строка: Статус, Приоритет, Ответственный -->
-                <div class="form-grid">
-                    <div class="form-group">
-                        <label for="status">Статус *</label>
-                        <select id="status" name="status" required>
-                            {% for status in cfg.statuses_order %}
-                            <option value="{{ status }}">{{ cfg.statuses_labels[status] if cfg.statuses_labels and status in cfg.statuses_labels else status }}</option>
-                            {% endfor %}
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label for="priority">Приоритет *</label>
-                        <select id="priority" name="priority" required>
-                        <option value="low">Низкий</option>
-                        <option value="medium" selected>Средний</option>
-                        <option value="high">Высокий</option>
-                    </select>
-                </div>
-                    <div class="form-group">
-                        <label for="assigned_to">Ответственный</label>
-                        <input type="text" id="assigned_to" name="assigned_to">
-                    </div>
-                </div>
-                
-                <!-- Третья строка: Дата взятия в работу, Дата выполнения, Напоминание -->
-                <div class="form-grid">
-                    <div class="form-group">
-                        <label for="scheduled_date">Дата взятия в работу</label>
-                        <input type="date" id="scheduled_date" name="scheduled_date">
-                    </div>
-                    <div class="form-group">
-                        <label for="due_date">Дата выполнения</label>
-                        <input type="date" id="due_date" name="due_date">
-                    </div>
-                    <div class="form-group">
-                        <label for="reminder_time">Напоминание</label>
-                        <input type="datetime-local" id="reminder_time" name="reminder_time">
-                        <small class="form-text text-muted">Установите точное время, когда хотите получить напоминание о задаче</small>
-                    </div>
-                </div>
-                
-                <!-- Четвертая строка: Связанные треды и ссылки, Теги -->
-                <div class="form-grid">
-                    <div class="form-group">
-                        <label for="related_threads">Связанные треды и ссылки</label>
-                        <div class="threads-input-container">
-                            <div class="threads-input-wrapper">
-                                <input type="text" id="related_threads" name="related_threads" placeholder="Введите ссылку и нажмите Enter..." autocomplete="off">
-                                <div id="threadsDisplay" class="threads-display"></div>
-                            </div>
-                            <small class="form-text">Можно добавить несколько ссылок: на треды, форумы, новости и т.д.</small>
-                        </div>
                     </div>
                     <div class="form-group">
                         <label for="tags">Теги</label>
@@ -1164,6 +1120,62 @@
                             </div>
                             <div class="tags-suggestions" id="tagsSuggestions"></div>
                         </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="due_date">Дата выполнения</label>
+                        <input type="date" id="due_date" name="due_date">
+                    </div>
+                </div>
+
+                <!-- Строка 2: четыре колонки -->
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="priority">Приоритет *</label>
+                        <select id="priority" name="priority" required>
+                            <option value="low">Низкий</option>
+                            <option value="medium" selected>Средний</option>
+                            <option value="high">Высокий</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="eisenhower_priority">Приоритет Эйзенхауэра *</label>
+                        <select id="eisenhower_priority" name="eisenhower_priority" required>
+                            <option value="urgent_important">🔥 Важные и срочные</option>
+                            <option value="urgent_not_important">⚡ Срочные не важные</option>
+                            <option value="not_urgent_important">⭐ Важные не срочные</option>
+                            <option value="not_urgent_not_important" selected>📋 Не важные не срочные</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="status">Статус *</label>
+                        <select id="status" name="status" required>
+                            {% for status in cfg.statuses_order %}
+                            <option value="{{ status }}">{{ cfg.statuses_labels[status] if cfg.statuses_labels and status in cfg.statuses_labels else status }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="scheduled_date">Дата взятия в работу</label>
+                        <input type="date" id="scheduled_date" name="scheduled_date">
+                    </div>
+                </div>
+
+                <!-- Строка 3: треды (3 колонки) | напоминание (4-я колонка, под датой взятия) -->
+                <div class="form-grid">
+                    <div class="form-group form-group--span-3">
+                        <label for="related_threads">Связанные треды и ссылки</label>
+                        <div class="threads-input-container">
+                            <div class="threads-input-wrapper">
+                                <input type="text" id="related_threads" name="related_threads" placeholder="Введите ссылку и нажмите Enter..." autocomplete="off">
+                                <div id="threadsDisplay" class="threads-display"></div>
+                            </div>
+                            <small class="form-text">Можно добавить несколько ссылок: на треды, форумы, новости и т.д.</small>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="reminder_time">Напоминание</label>
+                        <input type="datetime-local" id="reminder_time" name="reminder_time">
+                        <small class="form-text text-muted">Установите точное время, когда хотите получить напоминание о задаче</small>
                     </div>
                 </div>
                 

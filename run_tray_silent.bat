@@ -14,7 +14,8 @@ call ToDoLite_venv\Scripts\activate.bat
 
 echo.
 echo [INFO] Проверка порта 5000...
-netstat -an | find ":5000" >nul 2>&1
+REM Только LISTENING и порт именно :5000 (не 50001 и т.д.): ищем ":5000 " с пробелом после номера порта
+netstat -ano | findstr "LISTENING" | findstr ":5000 " >nul 2>&1
 if %errorlevel% equ 0 (
     echo [WARNING] Порт 5000 занят. Возможно, ToDoLite уже запущен.
     echo [INFO] Если программа не отвечает, используйте kill_python_processes.cmd

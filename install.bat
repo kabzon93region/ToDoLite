@@ -120,7 +120,7 @@ echo Виртуальное окружение создано: ToDoLite_venv
 echo Зависимости установлены
 echo.
 echo Теперь можно запускать:
-echo   run.bat          - обычный запуск
-echo   run_tray.bat     - запуск в трее
+echo   start.bat              - если есть ^(клиентский архив^)
+echo   run_tray_silent.bat    - запуск в трее ^(из этой папки^)
 echo.
 pause

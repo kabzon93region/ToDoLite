@@ -26,7 +26,7 @@ ToDoLite - это современное веб-приложение для уп
 
 ### Вариант 1: Автоматическая установка (Рекомендуется)
 
-1. **Скачайте** архив `ToDoLite-Client.zip`
+1. **Скачайте** архив **`ToDoLite_v1.5.5.zip`** (или актуальный из поставки). В архиве файлы лежат **в корне** (без вложенной папки), вместе с `README.md`, `LICENSE` и `convert_line_endings.*`.
 2. **Распакуйте** в любую папку (например, `C:\ToDoLite\`)
 3. **Запустите** `install.bat` от имени администратора
 4. **Дождитесь** завершения установки
@@ -194,7 +194,7 @@ ToDoLite автоматически перемещает задачи между
 **Решение:**
 1. Перезапустите программу
 2. Проверьте, не скрыта ли иконка в настройках Windows
-3. Используйте `start_with_console.bat` для отладки
+3. Для отладки запустите из командной строки с активированным venv: `python tray_app.py`
 
 ## 📞 Поддержка
 
@@ -205,33 +205,35 @@ ToDoLite автоматически перемещает задачи между
 
 ### Полезные команды:
 ```cmd
-# Проверка статуса
-netstat -an | findstr :5000
+# Прослушивание порта 5000 (только LISTENING)
+netstat -ano | findstr "LISTENING" | findstr ":5000 "
 
-# Остановка всех процессов Python
+# Остановка процессов Python (осторожно: закроет все python.exe / pythonw.exe)
+# Или запустите kill_python_processes.cmd из папки программы
+taskkill /F /IM pythonw.exe
 taskkill /F /IM python.exe
 
-# Запуск с консолью
-start_with_console.bat
-
-# Запуск в фоновом режиме
-start_silent.bat
+# Запуск: start.bat или run_tray_silent.bat из папки программы
 ```
 
 ## 📁 Структура файлов
 
 ```
-ToDoLite/
-├── app.py                 # Основное веб-приложение
-├── tray_app.py           # Приложение системного трея
-├── config.json           # Конфигурация
-├── requirements.txt      # Зависимости Python
-├── tasks.db             # База данных задач
-├── static/              # Статические файлы (CSS, иконки)
-├── templates/           # HTML шаблоны
-├── start.bat            # Скрипт запуска
-├── install.bat          # Скрипт установки
-└── docs/                # Документация
+ToDoLite/   (после распаковки архива)
+├── app.py, tray_app.py, *.py   # приложение
+├── config.json
+├── requirements.txt
+├── tasks.db                    # появится после первого запуска
+├── static/
+├── templates/
+├── README.md, CLIENT_README.md, LICENSE
+├── install.bat
+├── start.bat                   # вызов run_tray_silent.bat
+├── run_tray_silent.bat
+├── kill_python_processes.cmd
+├── convert_line_endings.cmd
+├── convert_line_endings.py
+└── VERSION.txt
 ```
 
 ## 🔄 Обновления
@@ -249,6 +251,6 @@ ToDoLite распространяется под лицензией MIT. Под�
 
 ---
 
-**Версия:** 1.4  
-**Дата:** 2025-01-13  
-**Автор:** ToDoLite Team
+**Версия клиентского пакета:** 1.5.5  
+**Дата:** 2026-04  
+**Лицензия:** см. файл `LICENSE` в комплекте
