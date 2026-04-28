@@ -293,7 +293,7 @@ app.run(debug=False, host='0.0.0.0', port=5000)
 ### Клиентский архив v1.5.5 (распространение пользователям)
 
 - **Файл:** `ToDoLite_v1.5.5.zip` в корне репозитория (локальная сборка; в `.gitignore`) и копия в [docs/releases/v1.5.5/](docs/releases/v1.5.5/)
-- **Содержимое:** плоский корень ZIP — исходники, `templates/`, `static/`, `README.md`, `CLIENT_README.md`, `LICENSE`, `requirements.txt`, `install.bat`, `start.bat`, `run_tray_silent.bat`, `kill_python_processes.cmd`, `convert_line_endings.*`, `VERSION.txt`, `docs/releases/v1.5.5/` (заметки о версии)
+- **Содержимое:** плоский корень ZIP — исходники, `templates/`, `static/`, `README.md`, `CLIENT_README.md`, `LICENSE`, `CHANGELOG.md`, `requirements.txt`, `install.bat`, `start.bat`, `run_tray_silent.bat`, `kill_python_processes.cmd`, `convert_line_endings.*`, `VERSION.txt`, `docs/AI_HANDOFF.md`, `docs/releases/v1.5.5/` (заметки о версии)
 - **Заметки:** [RELEASE_NOTES_v1.5.5.md](docs/releases/v1.5.5/RELEASE_NOTES_v1.5.5.md)
 
 ### v1.5.1 — Стабильная (история)
@@ -370,9 +370,10 @@ app.run(debug=False, host='0.0.0.0', port=5000)
 
 ## 📚 Дополнительная документация
 
-- [📋 Релизные заметки](docs/) - детальная информация о всех версиях
-- [🔧 Инструменты разработчика](docs/) - дополнительные скрипты и утилиты
-- [📦 Архивы релизов](docs/) - готовые архивы для распространения
+- [CHANGELOG.md](CHANGELOG.md) — история изменений (чейнджлог)
+- [docs/AI_HANDOFF.md](docs/AI_HANDOFF.md) — передача контекста следующему чату с ИИ
+- [docs/](docs/) — индекс документации, релизы, журнал разработки
+- [docs/releases/](docs/releases/) — заметки по версиям (в т.ч. v1.5.5)
 
 ## 📞 Поддержка
 
